@@ -1,0 +1,105 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@layer base {
+  body {
+    @apply bg-surface text-text font-sans antialiased;
+  }
+
+  ::selection {
+    @apply bg-primary/30 text-text;
+  }
+
+  ::-webkit-scrollbar {
+    @apply w-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-surface;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-surface-lighter rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-text-muted rounded-full;
+  }
+}
+
+@layer components {
+  .nav-link {
+    @apply relative px-4 py-2 text-text-muted font-medium transition-colors duration-300 hover:text-primary;
+  }
+
+  .nav-link.active {
+    @apply text-primary;
+  }
+
+  .nav-link.active::after {
+    content: '';
+    @apply absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-primary rounded-full;
+  }
+
+  .dish-card {
+    @apply bg-surface-light/60 backdrop-blur-sm border border-surface-lighter/50 rounded-2xl overflow-hidden
+           transition-all duration-500 ease-out hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5
+           hover:-translate-y-1;
+  }
+
+  .dish-card-image {
+    @apply relative w-full aspect-[4/3] bg-gradient-to-br from-surface-lighter to-surface-light
+           flex items-center justify-center overflow-hidden;
+  }
+
+  .dish-card-image .placeholder-icon {
+    @apply text-text-muted transition-transform duration-500;
+  }
+
+  .dish-card:hover .placeholder-icon {
+    @apply scale-110;
+  }
+
+  .flavour-tag {
+    @apply inline-block px-2.5 py-0.5 text-xs font-medium rounded-full
+           bg-primary/10 text-primary-light border border-primary/20
+           transition-all duration-300 hover:bg-primary/20;
+  }
+
+  .ingredient-item {
+    @apply flex justify-between items-baseline py-1.5 border-b border-surface-lighter/30 last:border-0;
+  }
+
+  .section-title {
+    @apply text-3xl md:text-4xl font-semibold text-text;
+  }
+
+  .filter-btn {
+    @apply px-4 py-1.5 text-sm font-medium rounded-full border border-surface-lighter text-text-muted
+           transition-all duration-300 hover:border-primary/50 hover:text-primary;
+  }
+
+  .filter-btn.active {
+    @apply bg-primary/20 border-primary/50 text-primary;
+  }
+
+  .fade-in {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  }
+
+  .fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .stagger-1 { transition-delay: 0.1s; }
+  .stagger-2 { transition-delay: 0.2s; }
+  .stagger-3 { transition-delay: 0.3s; }
+  .stagger-4 { transition-delay: 0.4s; }
+  .stagger-5 { transition-delay: 0.5s; }
+}

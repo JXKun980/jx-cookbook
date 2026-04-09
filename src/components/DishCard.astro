@@ -1,0 +1,158 @@
+---
+interface Ingredient {
+  name: string
+  qty: string
+}
+
+interface Props {
+  title: string
+  description: string
+  flavour_profile: string[]
+  ingredients: Record<string, Ingredient[]>
+  showIngredients?: boolean
+}
+
+const { title, description, flavour_profile, ingredients, showIngredients = false } = Astro.props
+
+const allIngredients = Object.entries(ingredients).flatMap(([, items]) => items)
+const ingredientSummary = allIngredients.map((i) => i.name).slice(0, 5).join(', ')
+const moreCount = Math.max(0, allIngredients.length - 5)
+
+const ingredientNames = allIngredients.map((i) => i.name.toLowerCase())
+
+const meatKeywords = ['chicken', 'beef', 'pork', 'lamb', 'fish', 'salmon', 'shrimp', 'prawn', 'duck', 'turkey', 'bacon', 'guanciale', 'ham', 'sausage', 'anchovy']
+const seafoodKeywords = ['salmon', 'fish', 'shrimp', 'prawn', 'crab', 'lobster', 'mussel', 'clam', 'oyster', 'squid', 'octopus', 'tuna', 'cod']
+const dairyEggKeywords = ['egg', 'milk', 'cream', 'cheese', 'butter', 'yogurt', 'honey', 'pecorino', 'parmesan', 'mozzarella']
+const nutKeywords = ['nut', 'almond', 'cashew', 'peanut', 'walnut', 'pistachio', 'pecan', 'hazelnut']
+
+const hasMeat = ingredientNames.some((n) => meatKeywords.some((k) => n.includes(k)))
+const hasSeafood = ingredientNames.some((n) => seafoodKeywords.some((k) => n.includes(k)))
+const hasDairyEgg = ingredientNames.some((n) => dairyEggKeywords.some((k) => n.includes(k)))
+const hasNuts = ingredientNames.some((n) => nutKeywords.some((k) => n.includes(k)))
+const isSpicy = flavour_profile.some((f) => f.toLowerCase().includes('spicy') || f.toLowerCase().includes('fiery'))
+
+const isVegetarian = !hasMeat && !hasSeafood
+const isVegan = isVegetarian && !hasDairyEgg
+
+const dietaryIcons: { emoji: string; label: string }[] = []
+if (isVegan) dietaryIcons.push({ emoji: '🌿', label: 'Vegan' })
+else if (isVegetarian) dietaryIcons.push({ emoji: '🌱', label: 'Vegetarian' })
+if (hasSeafood) dietaryIcons.push({ emoji: '🐟', label: 'Seafood' })
+if (isSpicy) dietaryIcons.push({ emoji: '🌶️', label: 'Spicy' })
+if (hasNuts) dietaryIcons.push({ emoji: '🥜', label: 'Contains nuts' })
+---
+
+<div class="dish-card group" data-flavours={JSON.stringify(flavour_profile)} data-title={title.toLowerCase()} data-dish-title={title}>
+  <div class="dish-card-image">
+    <svg class="placeholder-icon w-14 h-14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="0.8">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+    </svg>
+    <div class="absolute inset-0 bg-gradient-to-t from-surface-light via-transparent to-transparent"></div>
+    <div class="absolute bottom-3 left-4 right-4">
+      <h3 class="font-display text-lg font-medium text-text leading-tight">{title}</h3>
+    </div>
+    <button
+      class="fav-btn absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-full bg-surface/50 backdrop-blur-sm border border-surface-lighter/30 text-text-muted hover:text-red-400 hover:border-red-400/30 transition-all duration-300 cursor-pointer"
+      aria-label="Toggle favourite"
+    >
+      <svg class="fav-icon w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+      </svg>
+    </button>
+  </div>
+
+  <div class="p-4 space-y-3">
+    {dietaryIcons.length > 0 && (
+      <div class="flex flex-wrap gap-1.5">
+        {dietaryIcons.map((icon) => (
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] rounded-full bg-surface-lighter/30 text-text-muted" title={icon.label}>
+            {icon.emoji} {icon.label}
+          </span>
+        ))}
+      </div>
+    )}
+
+    <p class="text-text-muted text-sm leading-relaxed line-clamp-2">{description}</p>
+
+    <div class="flex flex-wrap gap-1.5">
+      {flavour_profile.map((tag) => (
+        <span class="flavour-tag">{tag}</span>
+      ))}
+    </div>
+
+    {showIngredients ? (
+      <div class="pt-2 border-t border-surface-lighter/20">
+        {Object.entries(ingredients).map(([group, items]) => (
+          <div class="mb-2">
+            {group !== '_default' && (
+              <h4 class="text-[10px] font-semibold text-primary/70 uppercase tracking-widest mb-1">{group}</h4>
+            )}
+            {(items as Ingredient[]).map((item) => (
+              <div class="ingredient-item">
+                <span class="text-text text-sm">{item.name}</span>
+                <span class="text-text-muted text-xs ml-2 whitespace-nowrap">{item.qty}</span>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    ) : (
+      <div class="pt-2 border-t border-surface-lighter/20">
+        <p class="text-text-muted/60 text-xs">
+          {ingredientSummary}{moreCount > 0 && `, +${moreCount} more`}
+        </p>
+      </div>
+    )}
+
+
+  </div>
+</div>
+
+<script>
+  function initDishCards() {
+    const FAVS_KEY = 'jx-cookbook-favourites'
+
+    function getFavourites(): string[] {
+      try { return JSON.parse(localStorage.getItem(FAVS_KEY) || '[]') } catch { return [] }
+    }
+
+    function saveFavourites(favs: string[]) {
+      localStorage.setItem(FAVS_KEY, JSON.stringify(favs))
+    }
+
+    function updateFavIcon(btn: Element, isFav: boolean) {
+      const icon = btn.querySelector('.fav-icon') as SVGElement
+      if (isFav) {
+        icon.setAttribute('fill', 'currentColor')
+        btn.classList.add('text-red-400')
+        btn.classList.remove('text-text-muted')
+      } else {
+        icon.setAttribute('fill', 'none')
+        btn.classList.remove('text-red-400')
+        btn.classList.add('text-text-muted')
+      }
+    }
+
+    document.querySelectorAll<HTMLElement>('.dish-card').forEach((card) => {
+      const dishTitle = card.dataset.dishTitle || ''
+      const favBtn = card.querySelector('.fav-btn')
+
+      if (favBtn) {
+        updateFavIcon(favBtn, getFavourites().includes(dishTitle))
+
+        favBtn.addEventListener('click', (e) => {
+          e.stopPropagation()
+          const current = getFavourites()
+          const idx = current.indexOf(dishTitle)
+          if (idx >= 0) current.splice(idx, 1)
+          else current.push(dishTitle)
+          saveFavourites(current)
+          updateFavIcon(favBtn, current.includes(dishTitle))
+          document.dispatchEvent(new CustomEvent('favourites-changed'))
+        })
+      }
+    })
+  }
+
+  initDishCards()
+</script>

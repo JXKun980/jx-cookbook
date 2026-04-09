@@ -1,0 +1,461 @@
+---
+import Layout from '../layouts/Layout.astro'
+---
+
+<Layout title="Admin" activePage="cookbook">
+  <div id="admin-gate" class="fixed inset-0 z-[100] bg-surface flex items-center justify-center px-6">
+    <div class="text-center max-w-xs w-full">
+      <p class="text-text-muted text-xs uppercase tracking-[0.3em] mb-6">Admin Access</p>
+      <input type="password" id="admin-password" placeholder="Enter password"
+        class="w-full px-4 py-3 bg-surface-light border border-surface-lighter/40 rounded-lg text-text text-sm text-center placeholder:text-text-muted/40 focus:outline-none focus:border-primary/30" />
+      <button id="admin-login"
+        class="mt-4 w-full px-4 py-2.5 text-[10px] uppercase tracking-[0.2em] text-primary border border-primary/20 rounded-lg hover:bg-primary/5 cursor-pointer">
+        Enter
+      </button>
+      <p id="admin-error" class="mt-3 text-red-400/70 text-xs hidden">Incorrect password</p>
+    </div>
+  </div>
+
+  <div id="admin-content" class="hidden">
+    <!-- Tabs -->
+    <div class="flex gap-4 mb-8 border-b border-surface-lighter/20 pb-4">
+      <button class="admin-tab active text-primary text-xs uppercase tracking-wider cursor-pointer" data-tab="dishes">Dishes</button>
+      <button class="admin-tab text-text-muted text-xs uppercase tracking-wider cursor-pointer" data-tab="menu">Menu</button>
+    </div>
+
+    <!-- Dishes Tab -->
+    <div id="tab-dishes">
+      <div class="flex items-center justify-between mb-6">
+        <h1 class="section-title text-2xl">Manage Dishes</h1>
+        <button id="add-dish-btn"
+          class="px-4 py-2 text-xs uppercase tracking-wider text-primary border border-primary/20 rounded-lg hover:bg-primary/5 cursor-pointer">
+          + New Dish
+        </button>
+      </div>
+
+      <div id="dish-list" class="space-y-2 mb-8"></div>
+
+      <!-- Dish Editor -->
+      <div id="dish-editor" class="hidden bg-surface-light border border-surface-lighter/40 rounded-xl p-6 space-y-5">
+        <h2 id="editor-title" class="font-display text-lg text-text">New Dish</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-1">Title (EN)</label>
+            <input id="f-title-en" class="w-full px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm focus:outline-none focus:border-primary/30" />
+          </div>
+          <div>
+            <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-1">Title (中文)</label>
+            <input id="f-title-zh" class="w-full px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm focus:outline-none focus:border-primary/30" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-1">Description (EN)</label>
+            <textarea id="f-desc-en" rows="3" class="w-full px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm focus:outline-none focus:border-primary/30 resize-none"></textarea>
+          </div>
+          <div>
+            <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-1">Description (中文)</label>
+            <textarea id="f-desc-zh" rows="3" class="w-full px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm focus:outline-none focus:border-primary/30 resize-none"></textarea>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-2">Flavour Profile</label>
+          <div id="f-flavours" class="flex flex-wrap gap-1.5"></div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-text-muted text-[10px] uppercase tracking-wider">Ingredients</label>
+            <button id="add-group-btn" class="text-[10px] text-primary uppercase tracking-wider cursor-pointer hover:text-primary-light">+ Add Group</button>
+          </div>
+          <div id="f-ingredients" class="space-y-4"></div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-1">Steps (EN)</label>
+            <textarea id="f-steps-en" rows="6" class="w-full px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm focus:outline-none focus:border-primary/30 resize-none" placeholder="One step per line"></textarea>
+          </div>
+          <div>
+            <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-1">Steps (中文)</label>
+            <textarea id="f-steps-zh" rows="6" class="w-full px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm focus:outline-none focus:border-primary/30 resize-none" placeholder="每行一个步骤"></textarea>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-2">Image</label>
+          <div class="flex items-center gap-4">
+            <input type="file" id="f-image" accept="image/*" class="text-text-muted text-sm file:mr-3 file:px-3 file:py-1.5 file:rounded-lg file:border file:border-surface-lighter/40 file:bg-surface file:text-text-muted file:text-xs file:cursor-pointer" />
+            <img id="f-image-preview" class="hidden w-20 h-20 rounded-lg object-cover border border-surface-lighter/40" />
+          </div>
+        </div>
+
+        <div class="flex gap-3 pt-2">
+          <button id="save-dish-btn" class="px-5 py-2 text-xs uppercase tracking-wider text-surface bg-primary rounded-lg hover:bg-primary-light cursor-pointer font-medium">Save</button>
+          <button id="cancel-dish-btn" class="px-5 py-2 text-xs uppercase tracking-wider text-text-muted border border-surface-lighter/40 rounded-lg hover:text-text cursor-pointer">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Menu Tab -->
+    <div id="tab-menu" class="hidden">
+      <h1 class="section-title text-2xl mb-6">Edit Menu</h1>
+      <div class="bg-surface-light border border-surface-lighter/40 rounded-xl p-6 space-y-6">
+        <div>
+          <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-1">Date</label>
+          <input id="m-date" type="date" class="px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm focus:outline-none focus:border-primary/30" />
+        </div>
+
+        <div id="menu-courses" class="space-y-4"></div>
+
+        <button id="save-menu-btn" class="px-5 py-2 text-xs uppercase tracking-wider text-surface bg-primary rounded-lg hover:bg-primary-light cursor-pointer font-medium">Save Menu</button>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  const FLAVOURS = ['savory','sweet','salty','sour','bitter','umami','tangy','tart','mild','mild-spice','spicy','fiery','numbing','peppery','crispy','crunchy','creamy','silky','chewy','tender','flaky','fluffy','rich','buttery','light','clean','hearty','decadent','delicate','smoky','aromatic','herby','garlicky','citrusy','earthy','nutty','floral','fragrant','charred','comfort','refreshing','warming','cooling','homestyle','indulgent','asian','western','mediterranean','latin','fusion']
+  const COURSES = [
+    { key: 'appetizer', label: 'Appetizer' },
+    { key: 'main', label: 'Main Course' },
+    { key: 'side', label: 'Side' },
+    { key: 'dessert', label: 'Dessert' },
+  ]
+
+  let password = ''
+  let dishes: any[] = []
+  let menu: any = { date: '', title_en: "Today's Menu", title_zh: '今日菜单', courses: { appetizer: [], main: [], side: [], dessert: [] } }
+  let editingId: string | null = null
+  let imageDataUrl: string | null = null
+
+  // Auth
+  const stored = localStorage.getItem('jx-cookbook-auth')
+  if (stored) {
+    password = stored
+    tryAuth()
+  }
+
+  document.getElementById('admin-login')!.addEventListener('click', () => {
+    password = (document.getElementById('admin-password') as HTMLInputElement).value
+    tryAuth()
+  })
+
+  document.getElementById('admin-password')!.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      password = (document.getElementById('admin-password') as HTMLInputElement).value
+      tryAuth()
+    }
+  })
+
+  async function tryAuth() {
+    try {
+      const res = await fetch('/api/dishes', { headers: { Authorization: password } })
+      if (res.ok) {
+        localStorage.setItem('jx-cookbook-auth', password)
+        document.getElementById('admin-gate')!.style.display = 'none'
+        document.getElementById('admin-content')!.classList.remove('hidden')
+        dishes = await res.json()
+        loadMenu()
+        renderDishList()
+        renderFlavours()
+        renderMenuCourses()
+      } else {
+        document.getElementById('admin-error')!.classList.remove('hidden')
+        setTimeout(() => document.getElementById('admin-error')!.classList.add('hidden'), 2000)
+      }
+    } catch {
+      // Fallback for local dev — just unlock
+      document.getElementById('admin-gate')!.style.display = 'none'
+      document.getElementById('admin-content')!.classList.remove('hidden')
+      dishes = []
+      renderDishList()
+      renderFlavours()
+      renderMenuCourses()
+    }
+  }
+
+  async function loadMenu() {
+    const res = await fetch('/api/menu', { headers: { Authorization: password } })
+    if (res.ok) menu = await res.json()
+    renderMenuCourses()
+    const dateInput = document.getElementById('m-date') as HTMLInputElement
+    dateInput.value = menu.date || new Date().toISOString().split('T')[0]
+  }
+
+  // Tabs
+  document.querySelectorAll('.admin-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.admin-tab').forEach(b => { b.classList.remove('active', 'text-primary'); b.classList.add('text-text-muted') })
+      btn.classList.add('active', 'text-primary')
+      btn.classList.remove('text-text-muted')
+      const tab = (btn as HTMLElement).dataset.tab!
+      document.getElementById('tab-dishes')!.classList.toggle('hidden', tab !== 'dishes')
+      document.getElementById('tab-menu')!.classList.toggle('hidden', tab !== 'menu')
+    })
+  })
+
+  // Dish list
+  function renderDishList() {
+    const list = document.getElementById('dish-list')!
+    list.innerHTML = dishes.length === 0
+      ? '<p class="text-text-muted text-sm italic">No dishes yet. Add your first one!</p>'
+      : dishes.map(d => `
+        <div class="flex items-center justify-between px-4 py-3 bg-surface border border-surface-lighter/30 rounded-lg">
+          <div>
+            <span class="text-text text-sm">${d.title_en}</span>
+            <span class="text-text-muted text-xs ml-2">${d.title_zh || ''}</span>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="editDish('${d.id}')" class="text-[10px] text-primary uppercase tracking-wider cursor-pointer hover:text-primary-light">Edit</button>
+            <button onclick="deleteDish('${d.id}')" class="text-[10px] text-red-400 uppercase tracking-wider cursor-pointer hover:text-red-300">Delete</button>
+          </div>
+        </div>
+      `).join('')
+  }
+
+  // Flavour pills
+  let selectedFlavours: string[] = []
+
+  function renderFlavours() {
+    const container = document.getElementById('f-flavours')!
+    container.innerHTML = FLAVOURS.map(f => `
+      <button type="button" class="flavour-toggle px-2.5 py-0.5 text-[10px] uppercase tracking-wider rounded-full border cursor-pointer transition-all duration-200
+        ${selectedFlavours.includes(f) ? 'bg-primary/20 border-primary/40 text-primary' : 'border-surface-lighter/40 text-text-muted hover:border-primary/20 hover:text-primary/70'}"
+        data-flavour="${f}">${f}</button>
+    `).join('')
+
+    container.querySelectorAll('.flavour-toggle').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const f = (btn as HTMLElement).dataset.flavour!
+        if (selectedFlavours.includes(f)) selectedFlavours = selectedFlavours.filter(x => x !== f)
+        else selectedFlavours.push(f)
+        renderFlavours()
+      })
+    })
+  }
+
+  // Ingredients
+  let ingredientGroups: { name: string; items: { name: string; qty: string }[] }[] = [{ name: '_default', items: [{ name: '', qty: '' }] }]
+
+  function renderIngredients() {
+    const container = document.getElementById('f-ingredients')!
+    container.innerHTML = ingredientGroups.map((g, gi) => `
+      <div class="bg-surface rounded-lg p-3 border border-surface-lighter/20">
+        <div class="flex items-center justify-between mb-2">
+          ${g.name === '_default'
+            ? '<span class="text-text-muted text-[10px] uppercase tracking-wider">Ingredients</span>'
+            : `<input value="${g.name}" onchange="updateGroupName(${gi}, this.value)" class="px-2 py-1 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30 w-40" placeholder="Group name" />`
+          }
+          <div class="flex gap-2">
+            <button onclick="addIngredient(${gi})" class="text-[10px] text-primary cursor-pointer">+ Item</button>
+            ${g.name !== '_default' ? `<button onclick="removeGroup(${gi})" class="text-[10px] text-red-400 cursor-pointer">Remove</button>` : ''}
+          </div>
+        </div>
+        ${g.items.map((item, ii) => `
+          <div class="flex gap-2 mb-1.5">
+            <input value="${item.name}" onchange="updateIngredient(${gi},${ii},'name',this.value)" placeholder="Ingredient" class="flex-1 px-2 py-1.5 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
+            <input value="${item.qty}" onchange="updateIngredient(${gi},${ii},'qty',this.value)" placeholder="Qty" class="w-20 px-2 py-1.5 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
+            <button onclick="removeIngredient(${gi},${ii})" class="text-red-400/50 hover:text-red-400 text-xs cursor-pointer">✕</button>
+          </div>
+        `).join('')}
+      </div>
+    `).join('')
+  }
+
+  // Global functions for onclick handlers
+  ;(window as any).editDish = (id: string) => {
+    const dish = dishes.find(d => d.id === id)
+    if (!dish) return
+    editingId = id
+    ;(document.getElementById('f-title-en') as HTMLInputElement).value = dish.title_en
+    ;(document.getElementById('f-title-zh') as HTMLInputElement).value = dish.title_zh || ''
+    ;(document.getElementById('f-desc-en') as HTMLTextAreaElement).value = dish.description_en
+    ;(document.getElementById('f-desc-zh') as HTMLTextAreaElement).value = dish.description_zh || ''
+    ;(document.getElementById('f-steps-en') as HTMLTextAreaElement).value = dish.steps_en
+    ;(document.getElementById('f-steps-zh') as HTMLTextAreaElement).value = dish.steps_zh || ''
+    selectedFlavours = [...(dish.flavour_profile || [])]
+    renderFlavours()
+
+    ingredientGroups = Object.entries(dish.ingredients || {}).map(([name, items]) => ({
+      name, items: (items as any[]).map(i => ({ ...i }))
+    }))
+    if (ingredientGroups.length === 0) ingredientGroups = [{ name: '_default', items: [{ name: '', qty: '' }] }]
+    renderIngredients()
+
+    imageDataUrl = null
+    const preview = document.getElementById('f-image-preview') as HTMLImageElement
+    if (dish.hasImage) {
+      preview.src = `/api/image?id=${dish.id}`
+      preview.classList.remove('hidden')
+    } else {
+      preview.classList.add('hidden')
+    }
+
+    document.getElementById('editor-title')!.textContent = 'Edit Dish'
+    document.getElementById('dish-editor')!.classList.remove('hidden')
+    document.getElementById('dish-editor')!.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  ;(window as any).deleteDish = async (id: string) => {
+    if (!confirm('Delete this dish?')) return
+    await fetch('/api/dishes', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', Authorization: password },
+      body: JSON.stringify({ id })
+    })
+    dishes = dishes.filter(d => d.id !== id)
+    renderDishList()
+    renderMenuCourses()
+  }
+
+  ;(window as any).updateGroupName = (gi: number, val: string) => { ingredientGroups[gi].name = val }
+  ;(window as any).addIngredient = (gi: number) => { ingredientGroups[gi].items.push({ name: '', qty: '' }); renderIngredients() }
+  ;(window as any).removeIngredient = (gi: number, ii: number) => { ingredientGroups[gi].items.splice(ii, 1); renderIngredients() }
+  ;(window as any).removeGroup = (gi: number) => { ingredientGroups.splice(gi, 1); renderIngredients() }
+  ;(window as any).updateIngredient = (gi: number, ii: number, field: string, val: string) => { (ingredientGroups[gi].items[ii] as any)[field] = val }
+
+  // Add group
+  document.getElementById('add-group-btn')!.addEventListener('click', () => {
+    ingredientGroups.push({ name: 'New Group', items: [{ name: '', qty: '' }] })
+    renderIngredients()
+  })
+
+  // New dish
+  document.getElementById('add-dish-btn')!.addEventListener('click', () => {
+    editingId = null
+    ;(document.getElementById('f-title-en') as HTMLInputElement).value = ''
+    ;(document.getElementById('f-title-zh') as HTMLInputElement).value = ''
+    ;(document.getElementById('f-desc-en') as HTMLTextAreaElement).value = ''
+    ;(document.getElementById('f-desc-zh') as HTMLTextAreaElement).value = ''
+    ;(document.getElementById('f-steps-en') as HTMLTextAreaElement).value = ''
+    ;(document.getElementById('f-steps-zh') as HTMLTextAreaElement).value = ''
+    selectedFlavours = []
+    renderFlavours()
+    ingredientGroups = [{ name: '_default', items: [{ name: '', qty: '' }] }]
+    renderIngredients()
+    imageDataUrl = null
+    ;(document.getElementById('f-image-preview') as HTMLImageElement).classList.add('hidden')
+    document.getElementById('editor-title')!.textContent = 'New Dish'
+    document.getElementById('dish-editor')!.classList.remove('hidden')
+    document.getElementById('dish-editor')!.scrollIntoView({ behavior: 'smooth' })
+  })
+
+  // Cancel
+  document.getElementById('cancel-dish-btn')!.addEventListener('click', () => {
+    document.getElementById('dish-editor')!.classList.add('hidden')
+  })
+
+  // Image upload
+  document.getElementById('f-image')!.addEventListener('change', (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      imageDataUrl = reader.result as string
+      const preview = document.getElementById('f-image-preview') as HTMLImageElement
+      preview.src = imageDataUrl
+      preview.classList.remove('hidden')
+    }
+    reader.readAsDataURL(file)
+  })
+
+  // Save dish
+  document.getElementById('save-dish-btn')!.addEventListener('click', async () => {
+    const title_en = (document.getElementById('f-title-en') as HTMLInputElement).value.trim()
+    if (!title_en) return alert('Title (EN) is required')
+
+    const id = editingId || title_en.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+    const ingredients: Record<string, any[]> = {}
+    ingredientGroups.forEach(g => {
+      const filtered = g.items.filter(i => i.name.trim())
+      if (filtered.length > 0) ingredients[g.name] = filtered
+    })
+
+    const dish = {
+      id,
+      title_en,
+      title_zh: (document.getElementById('f-title-zh') as HTMLInputElement).value.trim(),
+      description_en: (document.getElementById('f-desc-en') as HTMLTextAreaElement).value.trim(),
+      description_zh: (document.getElementById('f-desc-zh') as HTMLTextAreaElement).value.trim(),
+      flavour_profile: selectedFlavours,
+      ingredients,
+      steps_en: (document.getElementById('f-steps-en') as HTMLTextAreaElement).value.trim(),
+      steps_zh: (document.getElementById('f-steps-zh') as HTMLTextAreaElement).value.trim(),
+      hasImage: imageDataUrl !== null || dishes.find(d => d.id === id)?.hasImage || false,
+    }
+
+    const res = await fetch('/api/dishes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: password },
+      body: JSON.stringify(dish)
+    })
+
+    if (res.ok) {
+      if (imageDataUrl) {
+        await fetch('/api/image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: password },
+          body: JSON.stringify({ id: dish.id, image: imageDataUrl })
+        })
+        dish.hasImage = true
+      }
+
+      const idx = dishes.findIndex(d => d.id === id)
+      if (idx >= 0) dishes[idx] = dish
+      else dishes.push(dish)
+      renderDishList()
+      document.getElementById('dish-editor')!.classList.add('hidden')
+      renderMenuCourses()
+    }
+  })
+
+  // Menu
+  function renderMenuCourses() {
+    const container = document.getElementById('menu-courses')!
+    container.innerHTML = COURSES.map(c => `
+      <div>
+        <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-2">${c.label}</label>
+        <div class="flex flex-wrap gap-1.5">
+          ${dishes.map(d => {
+            const selected = (menu.courses?.[c.key] || []).includes(d.id)
+            return `<button type="button" class="menu-dish-toggle px-2.5 py-1 text-[10px] rounded-full border cursor-pointer transition-all
+              ${selected ? 'bg-primary/20 border-primary/40 text-primary' : 'border-surface-lighter/40 text-text-muted hover:border-primary/20'}"
+              data-course="${c.key}" data-dish="${d.id}">${d.title_en}</button>`
+          }).join('')}
+        </div>
+      </div>
+    `).join('')
+
+    container.querySelectorAll('.menu-dish-toggle').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const course = (btn as HTMLElement).dataset.course!
+        const dishId = (btn as HTMLElement).dataset.dish!
+        if (!menu.courses[course]) menu.courses[course] = []
+        const idx = menu.courses[course].indexOf(dishId)
+        if (idx >= 0) menu.courses[course].splice(idx, 1)
+        else menu.courses[course].push(dishId)
+        renderMenuCourses()
+      })
+    })
+  }
+
+  document.getElementById('save-menu-btn')!.addEventListener('click', async () => {
+    menu.date = (document.getElementById('m-date') as HTMLInputElement).value
+    const res = await fetch('/api/menu', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: password },
+      body: JSON.stringify(menu)
+    })
+    if (res.ok) {
+      const btn = document.getElementById('save-menu-btn')!
+      btn.textContent = 'Saved!'
+      setTimeout(() => { btn.textContent = 'Save Menu' }, 1500)
+    }
+  })
+
+  renderIngredients()
+</script>

@@ -1,0 +1,130 @@
+---
+import Layout from '../layouts/Layout.astro'
+import DishCard from '../components/DishCard.astro'
+import FilterBar from '../components/FilterBar.astro'
+import { getKV, getDishes } from '../lib/kv'
+import { t } from '../lib/i18n'
+import type { Lang } from '../lib/types'
+
+const lang = (Astro.url.searchParams.get('lang') as Lang) || 'en'
+const kv = getKV(Astro.locals)
+const allDishes = await getDishes(kv)
+
+const displayDishes = allDishes.map(d => ({
+  ...d,
+  title: lang === 'zh' ? (d.title_zh || d.title_en) : d.title_en,
+  description: lang === 'zh' ? (d.description_zh || d.description_en) : d.description_en,
+  steps: lang === 'zh' ? (d.steps_zh || d.steps_en) : d.steps_en,
+}))
+
+const allTags = [...new Set(displayDishes.flatMap((d) => d.flavour_profile))].sort()
+const sortedDishes = [...displayDishes].sort((a, b) => a.title.localeCompare(b.title))
+---
+
+<Layout title={t('dishes.title', lang)} activePage="dishes" lang={lang}>
+  <div class="mb-8 fade-in">
+    <h1 class="section-title mb-2">{t('dishes.title', lang)}</h1>
+    <p class="text-text-muted text-sm">
+      {t('dishes.browse', lang)} <span class="text-primary">{allDishes.length}</span> {t('dishes.inCollection', lang)}
+    </p>
+  </div>
+
+  <div class="fade-in" style="transition-delay: 0.1s">
+    <FilterBar allTags={allTags} />
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="dishes-grid">
+    {sortedDishes.map((dish, i) => (
+      <div class="fade-in dish-item" style={`transition-delay: ${(i + 1) * 0.08}s`}>
+        <DishCard title={dish.title} description={dish.description} flavour_profile={dish.flavour_profile} ingredients={dish.ingredients} />
+      </div>
+    ))}
+  </div>
+</Layout>
+
+<script>
+  function initFilters() {
+    const searchInput = document.getElementById('search-input') as HTMLInputElement
+    const sortSelect = document.getElementById('sort-select') as HTMLSelectElement
+    const filterContainer = document.getElementById('filter-tags')!
+    const grid = document.getElementById('dishes-grid')!
+    const noResults = document.getElementById('no-results')!
+    const items = Array.from(grid.querySelectorAll<HTMLElement>('.dish-item'))
+
+    let activeFilter = 'all'
+    let showFavsOnly = false
+
+    // Insert favourites toggle
+    const favBtn = document.createElement('button')
+    favBtn.className = 'filter-btn'
+    favBtn.dataset.filter = 'favs'
+    favBtn.textContent = '❤️ Favourites'
+    filterContainer.insertBefore(favBtn, filterContainer.firstChild)
+
+    const filterBtns = filterContainer.querySelectorAll<HTMLButtonElement>('.filter-btn')
+
+    function getFavourites(): string[] {
+      try { return JSON.parse(localStorage.getItem('jx-cookbook-favourites') || '[]') } catch { return [] }
+    }
+
+    function filterAndSort() {
+      const search = searchInput.value.toLowerCase().trim()
+      const sort = sortSelect.value
+      const favs = getFavourites()
+      let visibleCount = 0
+
+      const itemsWithData = items.map((el) => {
+        const card = el.querySelector('.dish-card') as HTMLElement
+        const title = card.dataset.title || ''
+        const dishTitle = card.dataset.dishTitle || ''
+        const flavours: string[] = JSON.parse(card.dataset.flavours || '[]')
+        return { el, title, dishTitle, flavours }
+      })
+
+      const sorted = [...itemsWithData].sort((a, b) => {
+        if (sort === 'name-asc') return a.title.localeCompare(b.title)
+        if (sort === 'name-desc') return b.title.localeCompare(a.title)
+        return 0
+      })
+
+      sorted.forEach((item) => grid.appendChild(item.el))
+
+      sorted.forEach((item) => {
+        const matchesSearch = !search || item.title.includes(search)
+        const matchesFilter = activeFilter === 'all' || item.flavours.includes(activeFilter)
+        const matchesFavs = !showFavsOnly || favs.includes(item.dishTitle)
+        const visible = matchesSearch && matchesFilter && matchesFavs
+
+        item.el.style.display = visible ? '' : 'none'
+        if (visible) visibleCount++
+      })
+
+      noResults.classList.toggle('hidden', visibleCount > 0)
+    }
+
+    searchInput.addEventListener('input', filterAndSort)
+    sortSelect.addEventListener('change', filterAndSort)
+
+    filterBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const filter = btn.dataset.filter || 'all'
+
+        if (filter === 'favs') {
+          showFavsOnly = !showFavsOnly
+          btn.classList.toggle('active', showFavsOnly)
+        } else {
+          filterBtns.forEach((b) => {
+            if (b.dataset.filter !== 'favs') b.classList.remove('active')
+          })
+          btn.classList.add('active')
+          activeFilter = filter
+        }
+        filterAndSort()
+      })
+    })
+
+    document.addEventListener('favourites-changed', filterAndSort)
+  }
+
+  initFilters()
+</script>

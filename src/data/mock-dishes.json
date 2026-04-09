@@ -1,0 +1,154 @@
+[
+  {
+    "title": "Chicken Katsu Curry",
+    "description": "A crispy panko-crusted chicken thigh served over rice with a rich Japanese curry sauce.",
+    "flavour_profile": ["savory", "umami", "mild-spice", "comfort", "crispy"],
+    "ingredients": {
+      "Chicken Cutlet": [
+        { "name": "chicken thigh, boneless", "qty": "2 pcs" },
+        { "name": "panko breadcrumbs", "qty": "100g" },
+        { "name": "eggs", "qty": "2" },
+        { "name": "plain flour", "qty": "50g" },
+        { "name": "salt", "qty": "1 tsp" }
+      ],
+      "Curry Sauce": [
+        { "name": "Japanese curry roux", "qty": "1 block" },
+        { "name": "onion, diced", "qty": "1" },
+        { "name": "carrot, diced", "qty": "1" },
+        { "name": "water", "qty": "400ml" }
+      ]
+    },
+    "steps": "Butterfly the chicken thighs and pound to even thickness.\nSet up breading station: flour, beaten eggs, panko.\nCoat chicken in flour, dip in egg, press into panko.\nDeep fry at 170°C for 5-6 minutes until golden.\nSauté onion and carrot until soft, add water, bring to boil.\nAdd curry roux, stir until thickened.\nSlice chicken, serve over rice, pour curry alongside."
+  },
+  {
+    "title": "Spaghetti Carbonara",
+    "description": "Classic Roman pasta with a silky egg and pecorino sauce, finished with crispy guanciale.",
+    "flavour_profile": ["savory", "rich", "creamy", "salty", "comfort", "western"],
+    "ingredients": {
+      "_default": [
+        { "name": "spaghetti", "qty": "200g" },
+        { "name": "guanciale", "qty": "150g" },
+        { "name": "egg yolks", "qty": "4" },
+        { "name": "whole egg", "qty": "1" },
+        { "name": "pecorino romano, grated", "qty": "80g" },
+        { "name": "black pepper", "qty": "generous" }
+      ]
+    },
+    "steps": "Bring a large pot of salted water to boil.\nCut guanciale into strips, cook in a cold pan on medium until crispy.\nWhisk egg yolks, whole egg, and most of the pecorino together.\nCook spaghetti until al dente, reserve pasta water.\nToss hot pasta into the guanciale pan off heat.\nAdd egg mixture, toss vigorously, adding pasta water to loosen.\nServe with remaining pecorino and black pepper."
+  },
+  {
+    "title": "Thai Green Curry",
+    "description": "A fragrant and creamy coconut curry loaded with tender chicken and Thai basil.",
+    "flavour_profile": ["spicy", "aromatic", "creamy", "herby", "savory", "asian"],
+    "ingredients": {
+      "Curry": [
+        { "name": "chicken breast, sliced", "qty": "300g" },
+        { "name": "coconut milk", "qty": "400ml" },
+        { "name": "green curry paste", "qty": "3 tbsp" },
+        { "name": "Thai basil leaves", "qty": "1 cup" },
+        { "name": "bamboo shoots", "qty": "100g" },
+        { "name": "Thai eggplant, quartered", "qty": "3" },
+        { "name": "fish sauce", "qty": "2 tbsp" },
+        { "name": "palm sugar", "qty": "1 tbsp" }
+      ]
+    },
+    "steps": "Heat a splash of coconut cream in a wok until it splits.\nFry green curry paste for 2 minutes until fragrant.\nAdd chicken and stir-fry until sealed.\nPour in remaining coconut milk, bring to a simmer.\nAdd eggplant and bamboo shoots, cook 5 minutes.\nSeason with fish sauce and palm sugar.\nFinish with Thai basil, serve over jasmine rice."
+  },
+  {
+    "title": "Beef Bulgogi",
+    "description": "Thinly sliced marinated beef, grilled to caramelised perfection with a sweet-savoury glaze.",
+    "flavour_profile": ["sweet", "savory", "umami", "garlicky", "charred", "asian"],
+    "ingredients": {
+      "Marinade": [
+        { "name": "beef sirloin, thinly sliced", "qty": "500g" },
+        { "name": "soy sauce", "qty": "4 tbsp" },
+        { "name": "pear, grated", "qty": "1/2" },
+        { "name": "sesame oil", "qty": "2 tbsp" },
+        { "name": "garlic, minced", "qty": "4 cloves" },
+        { "name": "ginger, grated", "qty": "1 tbsp" },
+        { "name": "brown sugar", "qty": "2 tbsp" }
+      ],
+      "Garnish": [
+        { "name": "spring onions, sliced", "qty": "3" },
+        { "name": "sesame seeds", "qty": "1 tbsp" }
+      ]
+    },
+    "steps": "Mix all marinade ingredients together.\nAdd sliced beef, marinate for at least 2 hours or overnight.\nHeat a grill or cast iron pan to high heat.\nCook beef in batches, getting a good char on each side.\nGarnish with spring onions and sesame seeds.\nServe with steamed rice and lettuce wraps."
+  },
+  {
+    "title": "Mushroom Risotto",
+    "description": "A luxuriously creamy Arborio rice dish with mixed wild mushrooms and parmesan.",
+    "flavour_profile": ["umami", "earthy", "creamy", "rich", "buttery", "comfort", "western"],
+    "ingredients": {
+      "_default": [
+        { "name": "Arborio rice", "qty": "300g" },
+        { "name": "mixed mushrooms, sliced", "qty": "250g" },
+        { "name": "vegetable stock, warm", "qty": "1L" },
+        { "name": "onion, finely diced", "qty": "1" },
+        { "name": "garlic cloves, minced", "qty": "2" },
+        { "name": "white wine", "qty": "150ml" },
+        { "name": "parmesan, grated", "qty": "60g" },
+        { "name": "butter", "qty": "30g" },
+        { "name": "thyme sprigs", "qty": "3" }
+      ]
+    },
+    "steps": "Sauté mushrooms in butter until golden, set aside.\nIn the same pan, cook onion and garlic until soft.\nAdd rice, toast for 1-2 minutes.\nDeglaze with white wine, stir until absorbed.\nAdd stock one ladle at a time, stirring frequently.\nCook for 18-20 minutes until rice is creamy and al dente.\nFold in mushrooms, parmesan, and remaining butter.\nSeason and serve with extra parmesan and thyme."
+  },
+  {
+    "title": "Salmon Teriyaki",
+    "description": "Pan-seared salmon fillet glazed with a homemade teriyaki sauce, served with steamed vegetables.",
+    "flavour_profile": ["sweet", "savory", "umami", "light", "asian"],
+    "ingredients": {
+      "Fish": [
+        { "name": "salmon fillets", "qty": "2 pcs" },
+        { "name": "vegetable oil", "qty": "1 tbsp" },
+        { "name": "salt", "qty": "pinch" }
+      ],
+      "Teriyaki Sauce": [
+        { "name": "soy sauce", "qty": "3 tbsp" },
+        { "name": "mirin", "qty": "2 tbsp" },
+        { "name": "sake", "qty": "2 tbsp" },
+        { "name": "sugar", "qty": "1 tbsp" }
+      ]
+    },
+    "steps": "Mix soy sauce, mirin, sake, and sugar for the teriyaki sauce.\nPat salmon dry and season with salt.\nHeat oil in a pan over medium-high heat.\nCook salmon skin-side down for 4 minutes until crispy.\nFlip, cook for 2 more minutes.\nPour teriyaki sauce into the pan, let it bubble and glaze the fish.\nServe with steamed rice and vegetables."
+  },
+  {
+    "title": "Tacos Al Pastor",
+    "description": "Achiote-marinated pork on warm corn tortillas with pineapple, cilantro, and onion.",
+    "flavour_profile": ["spicy", "tangy", "savory", "charred", "refreshing", "latin"],
+    "ingredients": {
+      "Pork": [
+        { "name": "pork shoulder, thinly sliced", "qty": "500g" },
+        { "name": "achiote paste", "qty": "2 tbsp" },
+        { "name": "pineapple juice", "qty": "100ml" },
+        { "name": "chipotle in adobo", "qty": "2" },
+        { "name": "garlic cloves", "qty": "3" },
+        { "name": "cumin", "qty": "1 tsp" }
+      ],
+      "Assembly": [
+        { "name": "corn tortillas", "qty": "12" },
+        { "name": "pineapple, diced", "qty": "1 cup" },
+        { "name": "white onion, diced", "qty": "1/2" },
+        { "name": "fresh cilantro", "qty": "1 bunch" },
+        { "name": "lime", "qty": "2" }
+      ]
+    },
+    "steps": "Blend achiote paste, pineapple juice, chipotles, garlic, and cumin into a smooth marinade.\nMarinate pork for at least 4 hours.\nGrill or pan-fry pork on high heat until charred edges form.\nChop the pork into small pieces.\nWarm tortillas on a dry griddle.\nAssemble with pork, diced pineapple, onion, cilantro, and a squeeze of lime."
+  },
+  {
+    "title": "Miso Soup",
+    "description": "A warming and delicate Japanese soup with tofu, wakame seaweed, and spring onions.",
+    "flavour_profile": ["umami", "light", "warming", "clean", "delicate", "asian"],
+    "ingredients": {
+      "_default": [
+        { "name": "dashi stock", "qty": "800ml" },
+        { "name": "white miso paste", "qty": "3 tbsp" },
+        { "name": "silken tofu, cubed", "qty": "150g" },
+        { "name": "dried wakame seaweed", "qty": "1 tbsp" },
+        { "name": "spring onions, sliced", "qty": "2" }
+      ]
+    },
+    "steps": "Bring dashi stock to a gentle simmer.\nRehydrate wakame in water for 5 minutes, drain.\nAdd tofu cubes and wakame to the stock.\nDissolve miso paste in a ladleful of hot stock, then stir back in.\nDo not boil after adding miso.\nServe in bowls topped with sliced spring onions."
+  }
+]

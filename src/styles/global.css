@@ -1,0 +1,134 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-surface text-text font-sans antialiased overflow-x-hidden;
+  }
+
+  ::selection {
+    @apply bg-primary/30 text-text;
+  }
+
+  ::-webkit-scrollbar {
+    @apply w-1.5;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-surface;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-surface-lighter rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary/40;
+  }
+}
+
+@layer components {
+  .nav-link {
+    @apply relative px-4 py-2 text-text-muted text-sm font-medium tracking-wide transition-colors duration-300 hover:text-primary;
+  }
+
+  .nav-link.active {
+    @apply text-primary;
+  }
+
+  .nav-link.active::after {
+    content: '';
+    @apply absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-px bg-primary rounded-full;
+  }
+
+  .dish-card {
+    @apply bg-surface-light border border-surface-lighter/40 rounded-xl overflow-hidden
+           transition-all duration-500 ease-out hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5
+           hover:-translate-y-1;
+  }
+
+  .dish-card-image {
+    @apply relative w-full aspect-[4/3] bg-gradient-to-br from-surface-lighter/80 to-surface-light
+           flex items-center justify-center overflow-hidden;
+  }
+
+  .dish-card-image .placeholder-icon {
+    @apply text-surface-lighter transition-transform duration-500;
+  }
+
+  .dish-card:hover .placeholder-icon {
+    @apply scale-110 text-primary/30;
+  }
+
+  .flavour-tag {
+    @apply inline-block px-2.5 py-0.5 text-[10px] font-medium rounded-full uppercase tracking-wider
+           bg-primary/10 text-primary/70 border border-primary/15
+           transition-all duration-300 hover:bg-primary/15 hover:text-primary;
+  }
+
+  .ingredient-item {
+    @apply flex justify-between items-baseline py-1.5 border-b border-surface-lighter/20 last:border-0;
+  }
+
+  .section-title {
+    @apply font-display text-3xl md:text-4xl font-medium text-text;
+  }
+
+  .filter-btn {
+    @apply px-4 py-1.5 text-xs font-medium rounded-full border border-surface-lighter/50 text-text-muted uppercase tracking-wider
+           transition-all duration-300 hover:border-primary/30 hover:text-primary cursor-pointer;
+  }
+
+  .filter-btn.active {
+    @apply bg-primary/10 border-primary/30 text-primary;
+  }
+
+  .fade-in {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+  }
+
+  .fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  nav, footer, .filter-btn, .no-print, #filter-tags, #search-input, #sort-select, .dish-card-image, .fav-btn, .menu-add-wrapper {
+    display: none !important;
+  }
+
+  .dish-card {
+    border: 1px solid #ddd !important;
+    background: white !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .flavour-tag {
+    border: 1px solid #bbb !important;
+    background: #f5f5f5 !important;
+    color: #333 !important;
+  }
+
+  .ingredient-item {
+    border-color: #ddd !important;
+  }
+
+  .ingredient-item span {
+    color: black !important;
+  }
+
+  details[open] summary {
+    display: none;
+  }
+}

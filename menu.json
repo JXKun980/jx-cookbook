@@ -1,0 +1,11 @@
+{
+  "date": "2026-04-09",
+  "title": "Today's Menu",
+  "subtitle": "",
+  "courses": {
+    "appetizer": ["Miso Soup"],
+    "main": ["Chicken Katsu Curry"],
+    "side": ["Salmon Teriyaki"],
+    "dessert": []
+  }
+}

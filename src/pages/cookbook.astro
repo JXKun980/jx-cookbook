@@ -1,0 +1,234 @@
+---
+import Layout from '../layouts/Layout.astro'
+import RecipeCard from '../components/RecipeCard.astro'
+import FilterBar from '../components/FilterBar.astro'
+import { getKV, getDishes } from '../lib/kv'
+import { t } from '../lib/i18n'
+import type { Lang } from '../lib/types'
+const lang = (Astro.url.searchParams.get('lang') as Lang) || 'en'
+const kv = getKV(Astro.locals)
+const allDishes = await getDishes(kv)
+
+const displayDishes = allDishes.map(d => ({
+  ...d,
+  title: lang === 'zh' ? (d.title_zh || d.title_en) : d.title_en,
+  description: lang === 'zh' ? (d.description_zh || d.description_en) : d.description_en,
+  steps: lang === 'zh' ? (d.steps_zh || d.steps_en) : d.steps_en,
+}))
+
+const allTags = [...new Set(displayDishes.flatMap((d) => d.flavour_profile))].sort()
+const sortedDishes = [...displayDishes].sort((a, b) => a.title.localeCompare(b.title))
+
+const rawPassword = (Astro.locals as any).runtime?.env?.COOKBOOK_PASSWORD || 'junxian'
+const encoder = new TextEncoder()
+const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(rawPassword))
+const passwordHash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('')
+---
+
+<Layout title={t('cookbook.title', lang)} activePage="cookbook" lang={lang}>
+  <!-- Password Gate -->
+  <div id="password-gate" class="fixed inset-0 z-[100] bg-surface flex items-center justify-center px-6">
+    <div class="text-center max-w-xs w-full">
+      <svg class="w-8 h-8 text-primary/40 mx-auto mb-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+      </svg>
+      <p class="text-text-muted text-xs uppercase tracking-[0.3em] mb-6">{t('cookbook.password', lang)}</p>
+      <input
+        type="password"
+        id="password-input"
+        placeholder={t('cookbook.enterPassword', lang)}
+        class="w-full px-4 py-3 bg-surface-light border border-surface-lighter/40 rounded-lg text-text text-sm text-center placeholder:text-text-muted/40 focus:outline-none focus:border-primary/30 transition-all duration-300"
+      />
+      <button
+        id="password-submit"
+        class="mt-4 w-full px-4 py-2.5 text-[10px] uppercase tracking-[0.2em] text-primary border border-primary/20 rounded-lg hover:bg-primary/5 transition-all duration-300 cursor-pointer"
+      >
+        {t('cookbook.enter', lang)}
+      </button>
+      <p id="password-error" class="mt-3 text-red-400/70 text-xs hidden">{t('cookbook.incorrect', lang)}</p>
+    </div>
+  </div>
+
+  <!-- Cookbook Content (hidden until authenticated) -->
+  <div id="cookbook-content" class="hidden">
+    <div class="mb-8 fade-in">
+      <h1 class="section-title mb-2">{t('cookbook.title', lang)}</h1>
+      <p class="text-text-muted text-sm">
+        {t('cookbook.subtitle', lang)} <span class="text-primary">{allDishes.length}</span> {t('cookbook.subtitleEnd', lang)}
+      </p>
+    </div>
+
+    <div class="fade-in" style="transition-delay: 0.1s">
+      <FilterBar allTags={allTags} />
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="dishes-grid">
+      {sortedDishes.map((dish, i) => (
+        <div class="fade-in dish-item" style={`transition-delay: ${(i + 1) * 0.08}s`}>
+          <RecipeCard title={dish.title} description={dish.description} flavour_profile={dish.flavour_profile} ingredients={dish.ingredients} steps={dish.steps} />
+        </div>
+      ))}
+    </div>
+  </div>
+</Layout>
+
+<script define:vars={{ passwordHash }}>
+  const SESSION_KEY = 'jx-cookbook-auth'
+
+  async function hashPassword(password) {
+    const encoder = new TextEncoder()
+    const data = encoder.encode(password)
+    const buffer = await crypto.subtle.digest('SHA-256', data)
+    return Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2, '0')).join('')
+  }
+
+  async function checkAuth() {
+    const stored = localStorage.getItem(SESSION_KEY)
+    if (stored === passwordHash) {
+      unlock()
+      return
+    }
+
+    const gate = document.getElementById('password-gate')
+    const input = document.getElementById('password-input')
+    const submitBtn = document.getElementById('password-submit')
+    const errorMsg = document.getElementById('password-error')
+
+    async function tryPassword() {
+      const hash = await hashPassword(input.value)
+      if (hash === passwordHash) {
+        localStorage.setItem(SESSION_KEY, passwordHash)
+        unlock()
+      } else {
+        errorMsg.classList.remove('hidden')
+        input.classList.add('border-red-400/30')
+        setTimeout(() => {
+          errorMsg.classList.add('hidden')
+          input.classList.remove('border-red-400/30')
+        }, 2000)
+      }
+    }
+
+    submitBtn.addEventListener('click', tryPassword)
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') tryPassword()
+    })
+  }
+
+  function unlock() {
+    const gate = document.getElementById('password-gate')
+    const content = document.getElementById('cookbook-content')
+    gate.style.opacity = '0'
+    gate.style.transition = 'opacity 0.3s ease-out'
+    setTimeout(() => {
+      gate.style.display = 'none'
+      content.classList.remove('hidden')
+    }, 300)
+  }
+
+  checkAuth()
+</script>
+
+<script>
+  function initFilters() {
+    // Wait for content to be visible
+    const observer = new MutationObserver(() => {
+      const content = document.getElementById('cookbook-content')
+      if (content && !content.classList.contains('hidden')) {
+        observer.disconnect()
+        setupFilters()
+      }
+    })
+    observer.observe(document.getElementById('cookbook-content')!, { attributes: true })
+
+    // Also try immediately in case already unlocked
+    const content = document.getElementById('cookbook-content')
+    if (content && !content.classList.contains('hidden')) {
+      setupFilters()
+    }
+  }
+
+  function setupFilters() {
+    const searchInput = document.getElementById('search-input') as HTMLInputElement
+    const sortSelect = document.getElementById('sort-select') as HTMLSelectElement
+    const filterContainer = document.getElementById('filter-tags')!
+    const grid = document.getElementById('dishes-grid')!
+    const noResults = document.getElementById('no-results')!
+    const items = Array.from(grid.querySelectorAll<HTMLElement>('.dish-item'))
+
+    let activeFilter = 'all'
+    let showFavsOnly = false
+
+    const favBtn = document.createElement('button')
+    favBtn.className = 'filter-btn'
+    favBtn.dataset.filter = 'favs'
+    favBtn.textContent = '❤️ Favourites'
+    filterContainer.insertBefore(favBtn, filterContainer.firstChild)
+
+    const filterBtns = filterContainer.querySelectorAll<HTMLButtonElement>('.filter-btn')
+
+    function getFavourites(): string[] {
+      try { return JSON.parse(localStorage.getItem('jx-cookbook-favourites') || '[]') } catch { return [] }
+    }
+
+    function filterAndSort() {
+      const search = searchInput.value.toLowerCase().trim()
+      const sort = sortSelect.value
+      const favs = getFavourites()
+      let visibleCount = 0
+
+      const itemsWithData = items.map((el) => {
+        const card = el.querySelector('.dish-card') as HTMLElement
+        const title = card.dataset.title || ''
+        const dishTitle = card.dataset.dishTitle || ''
+        const flavours: string[] = JSON.parse(card.dataset.flavours || '[]')
+        return { el, title, dishTitle, flavours }
+      })
+
+      const sorted = [...itemsWithData].sort((a, b) => {
+        if (sort === 'name-asc') return a.title.localeCompare(b.title)
+        if (sort === 'name-desc') return b.title.localeCompare(a.title)
+        return 0
+      })
+
+      sorted.forEach((item) => grid.appendChild(item.el))
+
+      sorted.forEach((item) => {
+        const matchesSearch = !search || item.title.includes(search)
+        const matchesFilter = activeFilter === 'all' || item.flavours.includes(activeFilter)
+        const matchesFavs = !showFavsOnly || favs.includes(item.dishTitle)
+        const visible = matchesSearch && matchesFilter && matchesFavs
+
+        item.el.style.display = visible ? '' : 'none'
+        if (visible) visibleCount++
+      })
+
+      noResults.classList.toggle('hidden', visibleCount > 0)
+    }
+
+    searchInput.addEventListener('input', filterAndSort)
+    sortSelect.addEventListener('change', filterAndSort)
+
+    filterBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const filter = btn.dataset.filter || 'all'
+
+        if (filter === 'favs') {
+          showFavsOnly = !showFavsOnly
+          btn.classList.toggle('active', showFavsOnly)
+        } else {
+          filterBtns.forEach((b) => {
+            if (b.dataset.filter !== 'favs') b.classList.remove('active')
+          })
+          btn.classList.add('active')
+          activeFilter = filter
+        }
+        filterAndSort()
+      })
+    })
+
+    document.addEventListener('favourites-changed', filterAndSort)
+  }
+
+  initFilters()
+</script>
