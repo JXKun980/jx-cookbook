@@ -576,8 +576,8 @@
           <!-- svelte-ignore a11y-no-static-element-interactions -->
           <div class="flex items-center justify-between px-4 py-3 bg-surface border border-surface-lighter/30 rounded-lg hover:border-primary/30 transition-colors cursor-pointer" on:click={() => openEditor(dish)}>
             <div>
-              <span class="text-text text-sm">{dish.title_en}</span>
-              <span class="text-text-muted text-xs ml-2">{dish.title_zh || ''}</span>
+              <span class="text-text text-sm">{$lang === 'zh' ? (dish.title_zh || dish.title_en) : dish.title_en}</span>
+              <span class="text-text-muted text-xs ml-2">{$lang === 'zh' ? dish.title_en : (dish.title_zh || '')}</span>
             </div>
             <button on:click|stopPropagation={() => deleteDish(dish.id)} class="text-[10px] text-red-400 uppercase tracking-wider cursor-pointer hover:text-red-300">{t('admin.delete', $lang)}</button>
           </div>
@@ -725,22 +725,22 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
             </button>
-            {#if tagsExpanded}
-            <div class="mt-2">
-              <p class="text-text-muted text-[10px] uppercase tracking-widest mb-1.5">{$lang === 'zh' ? '已选标签' : 'Selected'}</p>
-              <div class="flex flex-wrap gap-1.5">
-                {#if selectedTags.length > 0}
-                  {#each selectedTags as f}
-                    <button type="button" on:click={() => toggleTag(f)} class="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] uppercase tracking-wider rounded-full border cursor-pointer transition-all duration-200 bg-primary/20 border-primary/40 text-primary hover:bg-red-400/10 hover:border-red-400/30 hover:text-red-400">
-                      {getTagLabel(f)}
-                      <svg class="w-2.5 h-2.5 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
-                  {/each}
-                {:else}
-                  <span class="text-text-muted/40 text-xs italic">{t('admin.noneSelected', $lang)}</span>
+            <div class="flex flex-wrap gap-1.5 mt-2">
+              {#if selectedTags.length > 0}
+                {#if tagsExpanded}
+                  <p class="text-text-muted text-[10px] uppercase tracking-widest mb-0.5 w-full">{$lang === 'zh' ? '已选标签' : 'Selected'}</p>
                 {/if}
-              </div>
+                {#each selectedTags as f}
+                  <button type="button" on:click={() => toggleTag(f)} class="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] uppercase tracking-wider rounded-full border cursor-pointer transition-all duration-200 bg-primary/20 border-primary/40 text-primary hover:bg-red-400/10 hover:border-red-400/30 hover:text-red-400">
+                    {getTagLabel(f)}
+                    <svg class="w-2.5 h-2.5 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                  </button>
+                {/each}
+              {:else}
+                <span class="text-text-muted/40 text-xs italic">{t('admin.noneSelected', $lang)}</span>
+              {/if}
             </div>
+            {#if tagsExpanded}
               <div class="mt-3 space-y-3">
                 {#each TAG_CATEGORIES as cat}
                   <div>
