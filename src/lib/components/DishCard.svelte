@@ -2,7 +2,6 @@
   import { createEventDispatcher } from 'svelte';
   import { lang } from '$lib/stores';
   import { t } from '$lib/i18n';
-  import { getDietaryIcons } from '$lib/dietary';
   import type { Dish } from '$lib/types';
   import { browser } from '$app/environment';
 
@@ -31,7 +30,6 @@
   $: title = $lang === 'zh' ? (dish.title_zh || dish.title_en) : dish.title_en;
   $: description = $lang === 'zh' ? (dish.description_zh || dish.description_en) : dish.description_en;
   $: steps = $lang === 'zh' ? (dish.steps_zh || dish.steps_en) : dish.steps_en;
-  $: dietaryIcons = getDietaryIcons(dish.ingredients, dish.flavour_profile, $lang);
 
   $: allIngredients = Object.values(dish.ingredients).flat();
   $: ingredientSummary = allIngredients.map((i) => $lang === 'zh' ? (i.name_zh || i.name_en) : i.name_en).slice(0, 5).join(', ');
@@ -53,10 +51,9 @@
       id: dish.id,
       title,
       description,
-      flavours: dish.flavour_profile,
+      tags: dish.tags,
       ingredients: dish.ingredients,
       steps,
-      dietary: dietaryIcons,
     });
   }
 </script>
@@ -107,21 +104,11 @@
   {/if}
 
   <div class="p-4 space-y-3">
-    {#if dietaryIcons.length > 0}
-      <div class="flex flex-wrap gap-1.5">
-        {#each dietaryIcons as icon}
-          <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] rounded-full bg-surface-lighter/30 text-text-muted" title={icon.label}>
-            {icon.emoji} {icon.label}
-          </span>
-        {/each}
-      </div>
-    {/if}
-
     <p class="text-text-muted text-sm leading-relaxed line-clamp-2">{description}</p>
 
     <div class="flex flex-wrap gap-1.5">
-      {#each dish.flavour_profile as tag}
-        <span class="flavour-tag">{t(`flavour.${tag}`, $lang)}</span>
+      {#each dish.tags as tag}
+        <span class="tag-pill">{t(`tag.${tag}`, $lang)}</span>
       {/each}
     </div>
 

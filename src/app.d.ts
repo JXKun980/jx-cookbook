@@ -6,7 +6,6 @@ declare global {
       env: {
         COOKBOOK_DATA: KVNamespace;
         ADMIN_PASSWORD: string;
-        AI: any;
       };
     }
   }

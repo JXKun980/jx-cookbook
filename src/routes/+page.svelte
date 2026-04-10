@@ -1,7 +1,6 @@
 <script lang="ts">
   import { lang } from '$lib/stores';
   import { t } from '$lib/i18n';
-  import { getDietaryIcons } from '$lib/dietary';
   import { onMount } from 'svelte';
   import type { PageData } from './$types';
 
@@ -192,8 +191,8 @@
                       {dishDesc(dish)}
                     </p>
                     <div class="flex flex-wrap gap-2 justify-center {data.menu.showImages !== false && dishIdx % 2 === 1 ? 'md:justify-end' : data.menu.showImages !== false ? 'md:justify-start' : ''}">
-                      {#each dish.flavour_profile as tag}
-                        <span class="text-xs text-primary-dim uppercase tracking-[0.2em]">{t(`flavour.${tag}`, $lang)}</span>
+                      {#each dish.tags as tag}
+                        <span class="text-xs text-primary-dim uppercase tracking-[0.2em]">{t(`tag.${tag}`, $lang)}</span>
                       {/each}
                     </div>
                   </div>
@@ -259,7 +258,6 @@
   {@const title = dishTitle(modalDish)}
   {@const description = dishDesc(modalDish)}
   {@const steps = $lang === 'zh' ? (modalDish.steps_zh || modalDish.steps_en) : modalDish.steps_en}
-  {@const dietary = getDietaryIcons(modalDish.ingredients, modalDish.flavour_profile, $lang)}
   <!-- svelte-ignore a11y-click-events-have-key-events -->
   <!-- svelte-ignore a11y-no-static-element-interactions -->
   <div class="fixed inset-x-0 bottom-0 z-[200]" style="top: 4rem;">
@@ -274,19 +272,13 @@
           {/if}
           <div>
             <h2 class="font-display text-2xl font-medium text-text mb-2">{title}</h2>
-            {#if dietary.length > 0}
-              <div class="flex flex-wrap gap-1.5 mb-3">
-                {#each dietary as icon}
-                  <span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-surface-lighter/30 text-text-muted">{icon.emoji} {icon.label}</span>
-                {/each}
-              </div>
-            {/if}
+
             <p class="text-text-muted text-base leading-relaxed">{description}</p>
           </div>
 
           <div class="flex flex-wrap gap-1.5">
-            {#each modalDish.flavour_profile as tag}
-              <span class="flavour-tag">{t(`flavour.${tag}`, $lang)}</span>
+            {#each modalDish.tags as tag}
+              <span class="tag-pill">{t(`tag.${tag}`, $lang)}</span>
             {/each}
           </div>
 

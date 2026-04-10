@@ -63,7 +63,7 @@
     @apply scale-110;
   }
 
-  .flavour-tag {
+  .tag-pill {
     @apply inline-block px-2.5 py-0.5 text-xs font-medium rounded-full
            bg-primary/10 text-primary-light border border-primary/20
            transition-all duration-300 hover:bg-primary/20;

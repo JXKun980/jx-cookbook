@@ -98,7 +98,7 @@
         class="filter-btn"
         class:active={activeFilter === tag && !showFavsOnly}
         on:click={() => setFilter(tag)}
-      >{t(`flavour.${tag}`, $lang)}</button>
+      >{t(`tag.${tag}`, $lang)}</button>
     {/each}
     <button
       class="filter-btn text-primary/70 border-primary/20 hover:border-primary/40 hover:text-primary flex items-center gap-1"
@@ -123,7 +123,7 @@
                 class="filter-btn"
                 class:active={activeFilter === tag}
                 on:click={() => setFilter(tag)}
-              >{t(`flavour.${tag}`, $lang)}</button>
+              >{t(`tag.${tag}`, $lang)}</button>
             {/each}
           </div>
         </div>

@@ -10,7 +10,7 @@ export interface Dish {
   title_zh: string
   description_en: string
   description_zh: string
-  flavour_profile: string[]
+  tags: string[]
   ingredients: Record<string, Ingredient[]>
   steps_en: string
   steps_zh: string

@@ -5,7 +5,7 @@
   import { browser } from '$app/environment';
   import type { Dish, MenuConfig, Ingredient } from '$lib/types';
 
-  const FLAVOUR_CATEGORIES = [
+  const TAG_CATEGORIES = [
     { label: 'Taste', tags: ['savory','sweet','salty','sour','bitter','umami','tangy','tart','mild','briny','malty','caramelized','fermented','pickled','zesty','vinegary'] },
     { label: 'Heat', tags: ['mild-spice','spicy','fiery','numbing','peppery','hot','smoky-spice','wasabi','chili-oil','mala'] },
     { label: 'Texture', tags: ['crispy','crunchy','creamy','silky','chewy','tender','flaky','fluffy','velvety','crumbly','juicy','gelatinous','al-dente','crisp','melt-in-mouth','sticky','dense','airy'] },
@@ -29,7 +29,7 @@
   let dishes: Dish[] = [];
   let menu: MenuConfig = { date: '', title_en: "Today's Menu", title_zh: '今日菜单', courses: { appetizer: [], main: [], side: [], dessert: [] } };
 
-  let activeTab: 'dishes' | 'menu' | 'flavours' = 'dishes';
+  let activeTab: 'dishes' | 'menu' | 'tags' = 'dishes';
   let dishSearch = '';
   let dishSort = 'name-asc';
 
@@ -40,91 +40,183 @@
   let titleZh = '';
   let descEn = '';
   let descZh = '';
-  let stepsEn = '';
-  let stepsZh = '';
-  let selectedFlavours: string[] = [];
-  let flavoursExpanded = false;
-  let ingredientGroups: { name: string; name_zh: string; items: { name_en: string; name_zh: string; qty: string }[] }[] = [{ name: '_default', name_zh: '', items: [{ name_en: '', name_zh: '', qty: '' }] }];
+  let steps = '';
+  let selectedTags: string[] = [];
+  let tagsExpanded = false;
+  let ingredientGroups: { name: string; items: { name: string; qty: string }[] }[] = [{ name: '_default', items: [{ name: '', qty: '' }] }];
   let imageDataUrl: string | null = null;
   let imagePreviewSrc: string | null = null;
   let selectedCourses: string[] = [];
   let initialFormState = '';
   let saving = false;
-  let translating = false;
-  let translateLabel: 'idle' | 'translating' | 'done' | 'none' | 'error' = 'idle';
 
-  async function autoTranslate() {
-    const texts: { text: string; from: string; to: string; target: string }[] = [];
+  // Custom tag creation
+  interface CustomTagData {
+    categories: { key: string; en: string; zh: string }[];
+    tags: Record<string, { en: string; zh: string; category: string }>;
+  }
+  let customData: CustomTagData = { categories: [], tags: {} };
+  let showNewTagForm = false;
+  let newTagEn = '';
+  let newTagZh = '';
+  let newTagCategory = '';
+  let newCategoryEn = '';
+  let newCategoryZh = '';
 
-    // Title
-    if (titleEn.trim() && !titleZh.trim()) texts.push({ text: titleEn, from: 'en', to: 'zh', target: 'titleZh' });
-    else if (titleZh.trim() && !titleEn.trim()) texts.push({ text: titleZh, from: 'zh', to: 'en', target: 'titleEn' });
+  $: allCategories = [
+    ...TAG_CATEGORIES.map(c => ({ key: c.label.toLowerCase(), label: $lang === 'zh' ? t(`filter.${c.label.toLowerCase()}`, $lang) : c.label })),
+    ...customData.categories.map(c => ({ key: c.key, label: $lang === 'zh' ? c.zh : c.en })),
+  ];
 
-    // Description
-    if (descEn.trim() && !descZh.trim()) texts.push({ text: descEn, from: 'en', to: 'zh', target: 'descZh' });
-    else if (descZh.trim() && !descEn.trim()) texts.push({ text: descZh, from: 'zh', to: 'en', target: 'descEn' });
-
-    // Steps
-    if (stepsEn.trim() && !stepsZh.trim()) texts.push({ text: stepsEn, from: 'en', to: 'zh', target: 'stepsZh' });
-    else if (stepsZh.trim() && !stepsEn.trim()) texts.push({ text: stepsZh, from: 'zh', to: 'en', target: 'stepsEn' });
-
-    // Ingredients
-    ingredientGroups.forEach((g, gi) => {
-      g.items.forEach((item, ii) => {
-        if (item.name_en.trim() && !item.name_zh.trim()) texts.push({ text: item.name_en, from: 'en', to: 'zh', target: `ing:${gi}:${ii}:name_zh` });
-        else if (item.name_zh.trim() && !item.name_en.trim()) texts.push({ text: item.name_zh, from: 'zh', to: 'en', target: `ing:${gi}:${ii}:name_en` });
-      });
-      // Group name
-      if (g.name !== '_default' && g.name.trim() && !g.name_zh.trim()) texts.push({ text: g.name, from: 'en', to: 'zh', target: `grp:${gi}:name_zh` });
-      else if (g.name_zh.trim() && g.name === '_default') texts.push({ text: g.name_zh, from: 'zh', to: 'en', target: `grp:${gi}:name` });
-    });
-
-    if (texts.length === 0) {
-      translateLabel = 'none';
-      setTimeout(() => { translateLabel = 'idle'; }, 1500);
-      return;
-    }
-
-    translating = true;
-    translateLabel = 'translating';
-
+  async function loadCustomTags() {
     try {
-      const res = await fetch('/api/translate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: password },
-        body: JSON.stringify({ texts: texts.map(t => ({ text: t.text, from: t.from, to: t.to })) })
-      });
-
-      if (!res.ok) throw new Error();
-      const { results } = await res.json();
-
-      results.forEach((translated: string, i: number) => {
-        if (!translated) return;
-        const target = texts[i].target;
-        if (target === 'titleEn') titleEn = translated;
-        else if (target === 'titleZh') titleZh = translated;
-        else if (target === 'descEn') descEn = translated;
-        else if (target === 'descZh') descZh = translated;
-        else if (target === 'stepsEn') stepsEn = translated;
-        else if (target === 'stepsZh') stepsZh = translated;
-        else if (target.startsWith('ing:')) {
-          const [, gi, ii, field] = target.split(':');
-          (ingredientGroups[+gi].items[+ii] as any)[field] = translated;
-        } else if (target.startsWith('grp:')) {
-          const [, gi, field] = target.split(':');
-          (ingredientGroups[+gi] as any)[field] = translated;
+      const res = await fetch('/api/tags', { headers: { Authorization: password } });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.categories) {
+          customData = data;
+        } else if (data && typeof data === 'object') {
+          customData = { categories: [], tags: {} };
+          for (const [key, val] of Object.entries(data)) {
+            customData.tags[key] = { ...(val as any), category: 'custom' };
+          }
+          if (Object.keys(customData.tags).length > 0) {
+            customData.categories = [{ key: 'custom', en: 'Custom', zh: '自定义' }];
+          }
         }
-      });
-      ingredientGroups = [...ingredientGroups];
+      }
+    } catch { /* ignore */ }
+  }
 
-      translateLabel = 'done';
-      setTimeout(() => { translateLabel = 'idle'; }, 1500);
-    } catch {
-      translateLabel = 'error';
-      setTimeout(() => { translateLabel = 'idle'; }, 2000);
-    } finally {
-      translating = false;
+  async function saveCustomData() {
+    await fetch('/api/tags', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: password },
+      body: JSON.stringify(customData)
+    });
+  }
+
+  async function addNewTag() {
+    if (!newTagEn.trim() || !newTagZh.trim()) return;
+    let catKey = newTagCategory;
+
+    if (catKey === '__new__') {
+      if (!newCategoryEn.trim() || !newCategoryZh.trim()) return;
+      catKey = newCategoryEn.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      if (!catKey) return;
+      if (!customData.categories.find(c => c.key === catKey)) {
+        customData.categories = [...customData.categories, { key: catKey, en: newCategoryEn.trim(), zh: newCategoryZh.trim() }];
+      }
     }
+
+    if (!catKey) return;
+
+    const key = newTagEn.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    if (!key) return;
+    customData.tags[key] = { en: newTagEn.trim(), zh: newTagZh.trim(), category: catKey };
+    customData = { ...customData };
+    selectedTags = [...selectedTags, key];
+    await saveCustomData();
+    newTagEn = '';
+    newTagZh = '';
+    newTagCategory = '';
+    newCategoryEn = '';
+    newCategoryZh = '';
+    showNewTagForm = false;
+  }
+
+  function getTagLabel(key: string): string {
+    if (customData.tags[key]) return $lang === 'zh' ? customData.tags[key].zh : customData.tags[key].en;
+    return t(`tag.${key}`, $lang);
+  }
+
+  function getCustomTagsByCategory(catKey: string): string[] {
+    return Object.entries(customData.tags).filter(([, v]) => v.category === catKey).map(([k]) => k);
+  }
+
+  async function deleteCustomTag(key: string) {
+    if (!confirm(t('admin.deleteTagConfirm', $lang))) return;
+    delete customData.tags[key];
+    customData = { ...customData };
+    await saveCustomData();
+  }
+
+  async function deleteCustomCategory(catKey: string) {
+    if (!confirm(t('admin.deleteCategoryConfirm', $lang))) return;
+    customData.categories = customData.categories.filter(c => c.key !== catKey);
+    for (const [key, val] of Object.entries(customData.tags)) {
+      if (val.category === catKey) delete customData.tags[key];
+    }
+    customData = { ...customData };
+    await saveCustomData();
+  }
+
+  // Tag editor state
+  interface EditableCategory { label_en: string; label_zh: string; tags: { en: string; zh: string }[] }
+  let editableCategories: EditableCategory[] = [];
+  let tagEditorSaving = false;
+  let tagEditorSaveState: 'idle' | 'saving' | 'saved' = 'idle';
+
+  function initTagEditor() {
+    editableCategories = TAG_CATEGORIES.map(cat => ({
+      label_en: cat.label,
+      label_zh: t(`filter.${cat.label.toLowerCase()}`, 'zh'),
+      tags: cat.tags.map(tag => ({
+        en: t(`tag.${tag}`, 'en'),
+        zh: t(`tag.${tag}`, 'zh'),
+      }))
+    }));
+    // Merge custom categories
+    for (const cat of customData.categories) {
+      const catTags = getCustomTagsByCategory(cat.key);
+      editableCategories.push({
+        label_en: cat.en,
+        label_zh: cat.zh,
+        tags: catTags.map(k => ({ en: customData.tags[k].en, zh: customData.tags[k].zh }))
+      });
+    }
+  }
+
+  function addEditorTag(ci: number) {
+    editableCategories[ci].tags = [...editableCategories[ci].tags, { en: '', zh: '' }];
+    editableCategories = editableCategories;
+  }
+
+  function removeEditorTag(ci: number, ti: number) {
+    editableCategories[ci].tags.splice(ti, 1);
+    editableCategories = [...editableCategories];
+  }
+
+  function addEditorCategory() {
+    editableCategories = [...editableCategories, { label_en: '', label_zh: '', tags: [{ en: '', zh: '' }] }];
+  }
+
+  function removeEditorCategory(ci: number) {
+    if (!confirm(t('admin.deleteCategoryConfirm', $lang))) return;
+    editableCategories.splice(ci, 1);
+    editableCategories = [...editableCategories];
+  }
+
+  async function saveTagEditor() {
+    tagEditorSaving = true;
+    tagEditorSaveState = 'saving';
+    // Build customData from editableCategories
+    const newCustomData: CustomTagData = { categories: [], tags: {} };
+    for (const cat of editableCategories) {
+      if (!cat.label_en.trim()) continue;
+      const catKey = cat.label_en.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      newCustomData.categories.push({ key: catKey, en: cat.label_en.trim(), zh: cat.label_zh.trim() });
+      for (const tag of cat.tags) {
+        if (!tag.en.trim()) continue;
+        const tagKey = tag.en.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        newCustomData.tags[tagKey] = { en: tag.en.trim(), zh: tag.zh.trim(), category: catKey };
+      }
+    }
+    customData = newCustomData;
+    await saveCustomData();
+    tagEditorSaving = false;
+    tagEditorSaveState = 'saved';
+    setTimeout(() => { tagEditorSaveState = 'idle'; }, 1500);
   }
 
   // Menu state
@@ -133,72 +225,8 @@
   let menuSaving = false;
   let menuSaveState: 'idle' | 'saving' | 'saved' = 'idle';
 
-  // Flavour editor state
-  interface FlavourCategory { label_en: string; label_zh: string; tags: { key: string; en: string; zh: string }[] }
-  let flavourCategories: FlavourCategory[] = [];
-  let flavourSaving = false;
-  let flavourSaveState: 'idle' | 'saving' | 'saved' = 'idle';
-
-  function initFlavourCategories() {
-    // Build from current FLAVOUR_CATEGORIES + i18n translations
-    flavourCategories = FLAVOUR_CATEGORIES.map(cat => ({
-      label_en: cat.label,
-      label_zh: t(`filter.${cat.label.toLowerCase()}`, 'zh'),
-      tags: cat.tags.map(tag => ({
-        key: tag,
-        en: t(`flavour.${tag}`, 'en'),
-        zh: t(`flavour.${tag}`, 'zh'),
-      }))
-    }));
-  }
-
-  function addFlavourTag(ci: number) {
-    flavourCategories[ci].tags = [...flavourCategories[ci].tags, { key: '', en: '', zh: '' }];
-    flavourCategories = flavourCategories;
-  }
-
-  function removeFlavourTag(ci: number, ti: number) {
-    flavourCategories[ci].tags.splice(ti, 1);
-    flavourCategories = [...flavourCategories];
-  }
-
-  function addFlavourCategory() {
-    flavourCategories = [...flavourCategories, { label_en: '', label_zh: '', tags: [{ key: '', en: '', zh: '' }] }];
-  }
-
-  function removeFlavourCategory(ci: number) {
-    flavourCategories.splice(ci, 1);
-    flavourCategories = [...flavourCategories];
-  }
-
-  async function saveFlavoursFn() {
-    flavourSaving = true;
-    flavourSaveState = 'saving';
-    // Auto-generate keys from English names
-    const categoriesWithKeys = flavourCategories.map(cat => ({
-      ...cat,
-      tags: cat.tags.map(tag => ({
-        ...tag,
-        key: tag.en.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || tag.key
-      }))
-    }));
-    // Save flavour config to KV via a dedicated endpoint
-    const res = await fetch('/api/flavours', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: password },
-      body: JSON.stringify(categoriesWithKeys)
-    });
-    flavourSaving = false;
-    if (res.ok) {
-      flavourSaveState = 'saved';
-      setTimeout(() => { flavourSaveState = 'idle'; }, 1500);
-    } else {
-      flavourSaveState = 'idle';
-    }
-  }
-
   function getFormState(): string {
-    return JSON.stringify({ titleEn, titleZh, descEn, descZh, stepsEn, stepsZh, selectedFlavours, ingredientGroups, imageDataUrl, selectedCourses });
+    return JSON.stringify({ titleEn, titleZh, descEn, descZh, steps, selectedTags, ingredientGroups, imageDataUrl, selectedCourses });
   }
 
   function isDirty(): boolean {
@@ -226,7 +254,8 @@
         authed = true;
         dishes = await res.json();
         await loadMenu();
-        initFlavourCategories();
+        await loadCustomTags();
+        initTagEditor();
         observeFadeIns();
       } else {
         authError = true;
@@ -253,25 +282,25 @@
       titleZh = dish.title_zh || '';
       descEn = dish.description_en;
       descZh = dish.description_zh || '';
-      stepsEn = dish.steps_en;
-      stepsZh = dish.steps_zh || '';
-      selectedFlavours = [...(dish.flavour_profile || [])];
+      steps = dish.steps_zh || dish.steps_en || '';
+      selectedTags = [...(dish.tags || [])];
       ingredientGroups = Object.entries(dish.ingredients || {}).map(([name, items]) => ({
-        name, name_zh: (dish as any).ingredient_groups_zh?.[name] || '', items: (items as Ingredient[]).map(i => ({ ...i }))
+        name, items: (items as Ingredient[]).map(i => ({ name: i.name_zh || i.name_en, qty: i.qty }))
       }));
-      if (ingredientGroups.length === 0) ingredientGroups = [{ name: '_default', name_zh: '', items: [{ name_en: '', name_zh: '', qty: '' }] }];
+      if (ingredientGroups.length === 0) ingredientGroups = [{ name: '_default', items: [{ name: '', qty: '' }] }];
       selectedCourses = COURSES.map(c => c.key).filter(k => ((menu.courses as any)?.[k] || []).includes(dish.id));
       imageDataUrl = null;
       imagePreviewSrc = dish.hasImage ? `/api/image?id=${dish.id}` : null;
     } else {
       editingId = null;
-      titleEn = ''; titleZh = ''; descEn = ''; descZh = ''; stepsEn = ''; stepsZh = '';
-      selectedFlavours = [];
-      ingredientGroups = [{ name: '_default', name_zh: '', items: [{ name_en: '', name_zh: '', qty: '' }] }];
+      titleEn = ''; titleZh = ''; descEn = ''; descZh = ''; steps = '';
+      selectedTags = [];
+      ingredientGroups = [{ name: '_default', items: [{ name: '', qty: '' }] }];
       selectedCourses = [];
       imageDataUrl = null;
       imagePreviewSrc = null;
     }
+    showNewTagForm = false;
     editorOpen = true;
     initialFormState = getFormState();
   }
@@ -283,9 +312,9 @@
     editorOpen = false;
   }
 
-  function toggleFlavour(f: string) {
-    if (selectedFlavours.includes(f)) selectedFlavours = selectedFlavours.filter(x => x !== f);
-    else selectedFlavours = [...selectedFlavours, f];
+  function toggleTag(f: string) {
+    if (selectedTags.includes(f)) selectedTags = selectedTags.filter(x => x !== f);
+    else selectedTags = [...selectedTags, f];
   }
 
   function toggleCourse(k: string) {
@@ -294,7 +323,7 @@
   }
 
   function addIngredient(gi: number) {
-    ingredientGroups[gi].items = [...ingredientGroups[gi].items, { name_en: '', name_zh: '', qty: '' }];
+    ingredientGroups[gi].items = [...ingredientGroups[gi].items, { name: '', qty: '' }];
     ingredientGroups = ingredientGroups;
   }
 
@@ -304,7 +333,7 @@
   }
 
   function addGroup() {
-    ingredientGroups = [...ingredientGroups, { name: 'New Group', name_zh: '', items: [{ name_en: '', name_zh: '', qty: '' }] }];
+    ingredientGroups = [...ingredientGroups, { name: 'New Group', items: [{ name: '', qty: '' }] }];
   }
 
   function removeGroup(gi: number) {
@@ -330,13 +359,8 @@
     const id = editingId || titleEn.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     const ingredients: Record<string, Ingredient[]> = {};
     ingredientGroups.forEach(g => {
-      const filtered = g.items.filter(i => i.name_en.trim());
-      if (filtered.length > 0) ingredients[g.name] = filtered;
-    });
-
-    const ingredientGroupsZh: Record<string, string> = {};
-    ingredientGroups.forEach(g => {
-      if (g.name_zh) ingredientGroupsZh[g.name] = g.name_zh;
+      const filtered = g.items.filter(i => i.name.trim());
+      if (filtered.length > 0) ingredients[g.name] = filtered.map(i => ({ name_en: i.name, name_zh: i.name, qty: i.qty }));
     });
 
     const dish: any = {
@@ -345,11 +369,10 @@
       title_zh: titleZh.trim(),
       description_en: descEn.trim(),
       description_zh: descZh.trim(),
-      flavour_profile: selectedFlavours,
+      tags: selectedTags,
       ingredients,
-      ingredient_groups_zh: ingredientGroupsZh,
-      steps_en: stepsEn.trim(),
-      steps_zh: stepsZh.trim(),
+      steps_en: steps.trim(),
+      steps_zh: steps.trim(),
       hasImage: imageDataUrl !== null || dishes.find(d => d.id === id)?.hasImage || false,
     };
 
@@ -511,7 +534,7 @@
   <div class="flex gap-4 mb-8 border-b border-surface-lighter/20 pb-4 fade-in">
     <button class="text-xs uppercase tracking-wider cursor-pointer" class:text-primary={activeTab === 'dishes'} class:text-text-muted={activeTab !== 'dishes'} on:click={() => { activeTab = 'dishes'; observeFadeIns(); }}>{t('admin.dishes', $lang)}</button>
     <button class="text-xs uppercase tracking-wider cursor-pointer" class:text-primary={activeTab === 'menu'} class:text-text-muted={activeTab !== 'menu'} on:click={() => { activeTab = 'menu'; observeFadeIns(); }}>{t('admin.menu', $lang)}</button>
-    <button class="text-xs uppercase tracking-wider cursor-pointer" class:text-primary={activeTab === 'flavours'} class:text-text-muted={activeTab !== 'flavours'} on:click={() => { activeTab = 'flavours'; observeFadeIns(); }}>{t('admin.flavours', $lang)}</button>
+    <button class="text-xs uppercase tracking-wider cursor-pointer" class:text-primary={activeTab === 'tags'} class:text-text-muted={activeTab !== 'tags'} on:click={() => { activeTab = 'tags'; initTagEditor(); observeFadeIns(); }}>{t('admin.tags', $lang)}</button>
   </div>
 
   {#if activeTab === 'dishes'}
@@ -619,35 +642,35 @@
     </div>
   {/if}
 
-  {#if activeTab === 'flavours'}
-    <h1 class="section-title text-2xl mb-6 fade-in">{t('admin.editFlavours', $lang)}</h1>
+  {#if activeTab === 'tags'}
+    <h1 class="section-title text-2xl mb-6 fade-in">{t('admin.manageTags', $lang)}</h1>
     <div class="space-y-4 fade-in" style="transition-delay: 0.1s">
-      {#each flavourCategories as cat, ci}
+      {#each editableCategories as cat, ci}
         <div class="bg-surface-light border border-surface-lighter/40 rounded-xl p-3 sm:p-4 space-y-3 overflow-hidden">
           <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
-            <input bind:value={flavourCategories[ci].label_en} placeholder={t('admin.categoryNameEn', $lang)} class="flex-1 min-w-0 px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm font-medium focus:outline-none focus:border-primary/30" />
-            <input bind:value={flavourCategories[ci].label_zh} placeholder={t('admin.categoryNameZh', $lang)} class="flex-1 min-w-0 px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm focus:outline-none focus:border-primary/30" />
-            <button on:click={() => removeFlavourCategory(ci)} class="text-[10px] text-red-400 uppercase tracking-wider cursor-pointer shrink-0 hover:text-red-300 hover:bg-red-400/10 self-end sm:self-center px-3 py-2 rounded-lg border border-red-400/20 bg-red-400/5 transition-all">{t('admin.remove', $lang)}</button>
+            <input bind:value={editableCategories[ci].label_en} placeholder={$lang === 'zh' ? '分类（英文）' : 'Category (EN)'} class="flex-1 min-w-0 px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm font-medium focus:outline-none focus:border-primary/30" />
+            <input bind:value={editableCategories[ci].label_zh} placeholder={$lang === 'zh' ? '分类（中文）' : 'Category (中文)'} class="flex-1 min-w-0 px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm focus:outline-none focus:border-primary/30" />
+            <button on:click={() => removeEditorCategory(ci)} class="text-[10px] text-red-400 uppercase tracking-wider cursor-pointer shrink-0 hover:text-red-300 hover:bg-red-400/10 self-end sm:self-center px-3 py-2 rounded-lg border border-red-400/20 bg-red-400/5 transition-all">{t('admin.remove', $lang)}</button>
           </div>
           <div class="space-y-1.5">
             <div class="grid grid-cols-[1fr_1fr_20px] gap-1.5 px-1">
-              <span class="text-text-muted/40 text-[9px] uppercase tracking-wider">{t('admin.tagEn', $lang)}</span>
-              <span class="text-text-muted/40 text-[9px] uppercase tracking-wider">{t('admin.tagZh', $lang)}</span>
+              <span class="text-text-muted/40 text-[9px] uppercase tracking-wider">{$lang === 'zh' ? '英文' : 'English'}</span>
+              <span class="text-text-muted/40 text-[9px] uppercase tracking-wider">{$lang === 'zh' ? '中文' : '中文'}</span>
               <span></span>
             </div>
             {#each cat.tags as tag, ti}
               <div class="grid grid-cols-[1fr_1fr_20px] gap-1.5">
-                <input bind:value={flavourCategories[ci].tags[ti].en} placeholder="English" class="min-w-0 px-2 py-1.5 bg-surface border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
-                <input bind:value={flavourCategories[ci].tags[ti].zh} placeholder="中文" class="min-w-0 px-2 py-1.5 bg-surface border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
-                <button on:click={() => removeFlavourTag(ci, ti)} class="text-red-400/50 hover:text-red-400 text-xs cursor-pointer flex items-center justify-center"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+                <input bind:value={editableCategories[ci].tags[ti].en} placeholder="English" class="min-w-0 px-2 py-1.5 bg-surface border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
+                <input bind:value={editableCategories[ci].tags[ti].zh} placeholder="中文" class="min-w-0 px-2 py-1.5 bg-surface border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
+                <button on:click={() => removeEditorTag(ci, ti)} class="text-red-400/50 hover:text-red-400 text-xs cursor-pointer flex items-center justify-center"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
               </div>
             {/each}
           </div>
-          <button on:click={() => addFlavourTag(ci)} class="w-full text-[10px] text-primary cursor-pointer py-1.5 border border-dashed border-primary/20 rounded hover:bg-primary/5 transition-colors">{t('admin.addTag', $lang)}</button>
+          <button on:click={() => addEditorTag(ci)} class="w-full text-[10px] text-primary cursor-pointer py-1.5 border border-dashed border-primary/20 rounded hover:bg-primary/5 transition-colors">{t('admin.addNewTag', $lang)}</button>
         </div>
       {/each}
-      <button on:click={addFlavourCategory} class="w-full text-[10px] text-primary uppercase tracking-wider cursor-pointer py-2 border border-dashed border-primary/20 rounded-lg hover:bg-primary/5 transition-colors">{t('admin.addCategory', $lang)}</button>
-      <button on:click={saveFlavoursFn} disabled={flavourSaving} class="px-5 py-2 text-xs uppercase tracking-wider text-surface bg-primary rounded-lg hover:bg-primary-light cursor-pointer font-medium" class:opacity-60={flavourSaving} class:pointer-events-none={flavourSaving}>{t(flavourSaveState === 'saving' ? 'admin.saving' : flavourSaveState === 'saved' ? 'admin.saved' : 'admin.saveFlavours', $lang)}</button>
+      <button on:click={addEditorCategory} class="w-full text-[10px] text-primary uppercase tracking-wider cursor-pointer py-2 border border-dashed border-primary/20 rounded-lg hover:bg-primary/5 transition-colors">{$lang === 'zh' ? '+ 添加分类' : '+ Add Category'}</button>
+      <button on:click={saveTagEditor} disabled={tagEditorSaving} class="px-5 py-2 text-xs uppercase tracking-wider text-surface bg-primary rounded-lg hover:bg-primary-light cursor-pointer font-medium" class:opacity-60={tagEditorSaving} class:pointer-events-none={tagEditorSaving}>{t(tagEditorSaveState === 'saving' ? 'admin.saving' : tagEditorSaveState === 'saved' ? 'admin.saved' : 'admin.save', $lang)}</button>
     </div>
   {/if}
 {/if}
@@ -692,36 +715,82 @@
           </div>
 
           <div>
-            <button type="button" on:click={() => { flavoursExpanded = !flavoursExpanded }} class="flex items-center gap-2 cursor-pointer group">
-              <span class="text-text-muted text-[10px] uppercase tracking-wider group-hover:text-text">{t('admin.flavourProfile', $lang)}</span>
-              {#if selectedFlavours.length > 0}
-                <span class="text-[10px] text-primary/60">({selectedFlavours.length})</span>
+            <button type="button" on:click={() => { tagsExpanded = !tagsExpanded }} class="flex items-center gap-2 cursor-pointer group">
+              <span class="text-text-muted text-[10px] uppercase tracking-wider group-hover:text-text">{t('admin.tags', $lang)}</span>
+              {#if selectedTags.length > 0}
+                <span class="text-[10px] text-primary/60">({selectedTags.length})</span>
               {/if}
-              <svg class="w-3 h-3 text-text-muted transition-transform duration-200" class:rotate-180={flavoursExpanded} fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <svg class="w-3 h-3 text-text-muted transition-transform duration-200" class:rotate-180={tagsExpanded} fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
             </button>
-            <div class="flex flex-wrap gap-1.5 mt-2">
-              {#if selectedFlavours.length > 0}
-                {#each selectedFlavours as f}
-                  <button type="button" on:click={() => toggleFlavour(f)} class="px-2.5 py-0.5 text-[10px] uppercase tracking-wider rounded-full border cursor-pointer transition-all duration-200 bg-primary/20 border-primary/40 text-primary">{f}</button>
-                {/each}
-              {:else}
-                <span class="text-text-muted/40 text-xs italic">{t('admin.noneSelected', $lang)}</span>
-              {/if}
+            {#if tagsExpanded}
+            <div class="mt-2">
+              <p class="text-text-muted text-[10px] uppercase tracking-widest mb-1.5">{$lang === 'zh' ? '已选标签' : 'Selected'}</p>
+              <div class="flex flex-wrap gap-1.5">
+                {#if selectedTags.length > 0}
+                  {#each selectedTags as f}
+                    <button type="button" on:click={() => toggleTag(f)} class="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] uppercase tracking-wider rounded-full border cursor-pointer transition-all duration-200 bg-primary/20 border-primary/40 text-primary hover:bg-red-400/10 hover:border-red-400/30 hover:text-red-400">
+                      {getTagLabel(f)}
+                      <svg class="w-2.5 h-2.5 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                  {/each}
+                {:else}
+                  <span class="text-text-muted/40 text-xs italic">{t('admin.noneSelected', $lang)}</span>
+                {/if}
+              </div>
             </div>
-            {#if flavoursExpanded}
               <div class="mt-3 space-y-3">
-                {#each FLAVOUR_CATEGORIES as cat}
+                {#each TAG_CATEGORIES as cat}
                   <div>
                     <p class="text-text-muted text-[10px] uppercase tracking-widest mb-1.5">{cat.label}</p>
                     <div class="flex flex-wrap gap-1.5">
                       {#each cat.tags as f}
-                        <button type="button" on:click={() => toggleFlavour(f)} class="px-2.5 py-0.5 text-[10px] uppercase tracking-wider rounded-full border cursor-pointer transition-all duration-200 {selectedFlavours.includes(f) ? 'bg-primary/20 border-primary/40 text-primary' : 'border-surface-lighter/40 text-text-muted'}">{f}</button>
+                        <button type="button" on:click={() => toggleTag(f)} class="px-2.5 py-0.5 text-[10px] uppercase tracking-wider rounded-full border cursor-pointer transition-all duration-200 {selectedTags.includes(f) ? 'bg-primary/20 border-primary/40 text-primary' : 'border-surface-lighter/40 text-text-muted'}">{getTagLabel(f)}</button>
                       {/each}
                     </div>
                   </div>
                 {/each}
+                {#each customData.categories as cat}
+                  {@const catTags = getCustomTagsByCategory(cat.key)}
+                  {#if catTags.length > 0}
+                    <div>
+                      <p class="text-text-muted text-[10px] uppercase tracking-widest mb-1.5">{$lang === 'zh' ? cat.zh : cat.en}</p>
+                      <div class="flex flex-wrap gap-1.5">
+                        {#each catTags as f}
+                          <button type="button" on:click={() => toggleTag(f)} class="px-2.5 py-0.5 text-[10px] uppercase tracking-wider rounded-full border cursor-pointer transition-all duration-200 {selectedTags.includes(f) ? 'bg-primary/20 border-primary/40 text-primary' : 'border-surface-lighter/40 text-text-muted'}">{getTagLabel(f)}</button>
+                        {/each}
+                      </div>
+                    </div>
+                  {/if}
+                {/each}
+                {#if showNewTagForm}
+                  <div class="bg-surface rounded-lg p-3 border border-surface-lighter/20 space-y-2">
+                    <div class="flex flex-wrap gap-2">
+                      <input bind:value={newTagEn} placeholder={t('admin.tagNameEn', $lang)} class="flex-1 min-w-0 px-2 py-1.5 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
+                      <input bind:value={newTagZh} placeholder={t('admin.tagNameZh', $lang)} class="flex-1 min-w-0 px-2 py-1.5 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
+                    </div>
+                    <select bind:value={newTagCategory} class="w-full px-2 py-1.5 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30">
+                      <option value="" disabled>{$lang === 'zh' ? '选择分类...' : 'Select category...'}</option>
+                      {#each allCategories as cat}
+                        <option value={cat.key}>{cat.label}</option>
+                      {/each}
+                      <option value="__new__">{$lang === 'zh' ? '+ 新分类' : '+ New category'}</option>
+                    </select>
+                    {#if newTagCategory === '__new__'}
+                      <div class="flex flex-wrap gap-2">
+                        <input bind:value={newCategoryEn} placeholder={$lang === 'zh' ? '分类名称（英文）' : 'Category name (EN)'} class="flex-1 min-w-0 px-2 py-1.5 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
+                        <input bind:value={newCategoryZh} placeholder={$lang === 'zh' ? '分类名称（中文）' : 'Category name (中文)'} class="flex-1 min-w-0 px-2 py-1.5 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
+                      </div>
+                    {/if}
+                    <div class="flex gap-2">
+                      <button on:click={addNewTag} class="px-3 py-1.5 text-[10px] uppercase tracking-wider text-primary border border-primary/20 rounded hover:bg-primary/5 cursor-pointer">{t('admin.addTagBtn', $lang)}</button>
+                      <button on:click={() => { showNewTagForm = false }} class="px-2 py-1.5 text-[10px] text-text-muted cursor-pointer">{t('admin.cancel', $lang)}</button>
+                    </div>
+                  </div>
+                {:else}
+                  <button on:click={() => { showNewTagForm = true }} class="text-[10px] text-primary cursor-pointer hover:text-primary-light">{t('admin.addNewTag', $lang)}</button>
+                {/if}
               </div>
             {/if}
           </div>
@@ -732,15 +801,13 @@
               {#each ingredientGroups as group, gi}
                 <div class="bg-surface rounded-lg p-3 border border-surface-lighter/20 overflow-hidden">
                   <div class="flex items-center justify-between mb-2">
-                    <input value={group.name === '_default' ? '' : group.name} on:change={(e) => { ingredientGroups[gi].name = e.currentTarget.value || '_default'; ingredientGroups = ingredientGroups; }} class="px-2 py-1 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30 flex-1 min-w-0 max-w-[150px]" placeholder="Group (EN)" />
-                    <input bind:value={ingredientGroups[gi].name_zh} class="px-2 py-1 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30 flex-1 min-w-0 max-w-[150px]" placeholder="分组（中文）" />
+                    <input value={group.name === '_default' ? '' : group.name} on:change={(e) => { ingredientGroups[gi].name = e.currentTarget.value || '_default'; ingredientGroups = ingredientGroups; }} class="px-2 py-1 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30 flex-1 min-w-0 max-w-[200px]" placeholder={t('admin.groupName', $lang)} />
                     <button on:click={() => removeGroup(gi)} class="text-[10px] text-red-400 uppercase tracking-wider cursor-pointer ml-2 shrink-0 px-2.5 py-1 rounded border border-red-400/20 bg-red-400/5 hover:bg-red-400/10 hover:text-red-300 transition-all">{t('admin.remove', $lang)}</button>
                   </div>
                   {#each group.items as item, ii}
                     <div class="flex flex-wrap gap-1.5 mb-1.5">
-                      <input bind:value={ingredientGroups[gi].items[ii].name_en} placeholder={t('admin.ingredientEn', $lang)} class="flex-1 min-w-0 px-2 py-1.5 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
-                      <input bind:value={ingredientGroups[gi].items[ii].name_zh} placeholder={t('admin.ingredientZh', $lang)} class="flex-1 min-w-0 px-2 py-1.5 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
-                      <input bind:value={ingredientGroups[gi].items[ii].qty} placeholder="Qty" class="w-16 shrink-0 px-2 py-1.5 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
+                      <input bind:value={ingredientGroups[gi].items[ii].name} placeholder={t('admin.ingredient', $lang)} class="flex-1 min-w-0 px-2 py-1.5 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
+                      <input bind:value={ingredientGroups[gi].items[ii].qty} placeholder="Qty" class="w-20 shrink-0 px-2 py-1.5 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
                       <button on:click={() => removeIngredient(gi, ii)} class="text-red-400/50 hover:text-red-400 text-xs cursor-pointer shrink-0"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
                     </div>
                   {/each}
@@ -751,15 +818,9 @@
             <button on:click={addGroup} class="w-full mt-3 text-[10px] text-primary uppercase tracking-wider cursor-pointer py-2 border border-dashed border-primary/20 rounded-lg hover:bg-primary/5 transition-colors">{t('admin.addGroup', $lang)}</button>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-1">{t('admin.stepsEn', $lang)}</label>
-              <textarea bind:value={stepsEn} rows={flavoursExpanded ? 8 : 12} class="w-full px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm focus:outline-none focus:border-primary/30 resize-vertical" placeholder={t('admin.stepsPlaceholderEn', $lang)}></textarea>
-            </div>
-            <div>
-              <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-1">{t('admin.stepsZh', $lang)}</label>
-              <textarea bind:value={stepsZh} rows={flavoursExpanded ? 8 : 12} class="w-full px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm focus:outline-none focus:border-primary/30 resize-vertical" placeholder={t('admin.stepsPlaceholderZh', $lang)}></textarea>
-            </div>
+          <div>
+            <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-1">{t('admin.steps', $lang)}</label>
+            <textarea bind:value={steps} rows={tagsExpanded ? 8 : 12} class="w-full px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm focus:outline-none focus:border-primary/30 resize-vertical" placeholder={t('admin.stepsPlaceholder', $lang)}></textarea>
           </div>
 
           <div>
@@ -782,17 +843,9 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-3 px-6 py-4 border-t border-surface-lighter/20 shrink-0">
+        <div class="flex gap-3 px-6 py-4 border-t border-surface-lighter/20 shrink-0">
           <button on:click={saveDish} disabled={saving} class="px-5 py-2 text-xs uppercase tracking-wider text-surface bg-primary rounded-lg hover:bg-primary-light cursor-pointer font-medium" class:opacity-60={saving} class:pointer-events-none={saving}>{saving ? t('admin.saving', $lang) : t('admin.save', $lang)}</button>
           <button on:click={tryCloseEditor} class="px-5 py-2 text-xs uppercase tracking-wider text-text-muted border border-surface-lighter/40 rounded-lg hover:text-text cursor-pointer">{t('admin.cancel', $lang)}</button>
-          <div class="flex-1"></div>
-          <button
-            on:click={autoTranslate}
-            disabled={translating}
-            class="px-4 py-2 text-xs uppercase tracking-wider border rounded-lg cursor-pointer transition-all duration-300 {translateLabel === 'done' ? 'text-green-400 border-green-400/30' : translateLabel === 'error' ? 'text-red-400 border-red-400/30' : translateLabel === 'none' ? 'text-text-muted border-surface-lighter/40' : 'text-primary/70 border-primary/20 hover:border-primary/40 hover:text-primary'}"
-            class:opacity-60={translating}
-            class:pointer-events-none={translating}
-          ><svg class="w-3 h-3 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18zm0-18c2.5 3 4 6.5 4 9s-1.5 6-4 9m0-18c-2.5 3-4 6.5-4 9s1.5 6 4 9m-9-9h18"/></svg>{t(translateLabel === 'translating' ? 'admin.translating' : translateLabel === 'done' ? 'admin.translateDone' : translateLabel === 'none' ? 'admin.translateNone' : translateLabel === 'error' ? 'admin.translateError' : 'admin.autoTranslate', $lang)}</button>
         </div>
       </div>
     </div>

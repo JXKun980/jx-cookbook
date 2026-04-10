@@ -13,7 +13,7 @@
   let filterState = { search: '', sort: 'name-asc', activeFilter: 'all', showFavsOnly: false };
   let favVersion = 0;
 
-  $: allTags = [...new Set(data.allDishes.flatMap((d) => d.flavour_profile))].sort();
+  $: allTags = [...new Set(data.allDishes.flatMap((d) => d.tags))].sort();
 
   function getFavourites(): string[] {
     if (!browser) return [];
@@ -32,7 +32,7 @@
     const result = data.allDishes.filter(d => {
       const title = (currentLang === 'zh' ? (d.title_zh || d.title_en) : d.title_en).toLowerCase();
       const matchesSearch = !searchLower || title.includes(searchLower);
-      const matchesFilter = activeFilter === 'all' || d.flavour_profile.includes(activeFilter);
+      const matchesFilter = activeFilter === 'all' || d.tags.includes(activeFilter);
       const matchesFavs = !showFavsOnly || favs.includes(d.title_en);
       return matchesSearch && matchesFilter && matchesFavs;
     });
@@ -98,16 +98,13 @@
         const title = $lang === 'zh' ? (dish.title_zh || dish.title_en) : dish.title_en;
         const description = $lang === 'zh' ? (dish.description_zh || dish.description_en) : dish.description_en;
         const steps = $lang === 'zh' ? (dish.steps_zh || dish.steps_en) : dish.steps_en;
-        const { getDietaryIcons } = await import('$lib/dietary');
-        const dietary = getDietaryIcons(dish.ingredients, dish.flavour_profile, $lang);
         modalData = {
           id: dish.id,
           title,
           description,
-          flavours: dish.flavour_profile,
+          tags: dish.tags,
           ingredients: dish.ingredients,
           steps,
-          dietary,
         };
         modalOpen = true;
       }
@@ -167,19 +164,13 @@
           {/if}
           <div>
             <h2 class="font-display text-2xl font-medium text-text mb-2">{modalData.title}</h2>
-            {#if modalData.dietary?.length > 0}
-              <div class="flex flex-wrap gap-1.5 mb-3">
-                {#each modalData.dietary as icon}
-                  <span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-surface-lighter/30 text-text-muted">{icon.emoji} {icon.label}</span>
-                {/each}
-              </div>
-            {/if}
+
             <p class="text-text-muted text-base leading-relaxed">{modalData.description}</p>
           </div>
 
           <div class="flex flex-wrap gap-1.5">
-            {#each modalData.flavours as tag}
-              <span class="flavour-tag">{t(`flavour.${tag}`, $lang)}</span>
+            {#each (modalData.tags || []) as tag}
+              <span class="tag-pill">{t(`tag.${tag}`, $lang)}</span>
             {/each}
           </div>
 
