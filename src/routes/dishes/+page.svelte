@@ -176,19 +176,17 @@
           </div>
 
           {#if Object.keys(modalData.ingredients).length > 0}
-            <div class="pt-3 border-t border-surface-lighter/20 max-w-xs">
+            <div class="pt-3 border-t border-surface-lighter/20">
               <h4 class="text-xs font-semibold text-text-muted uppercase tracking-widest mb-2">{t('recipe.ingredients', $lang)}</h4>
               {#each Object.entries(modalData.ingredients) as [group, items]}
                 {#if group !== '_default'}
                   <h5 class="text-xs font-semibold text-primary/70 uppercase tracking-widest mb-1 mt-3">{group}</h5>
                 {/if}
-                {#each items as item}
-                  <div class="ingredient-row">
-                    <span class="text-text text-sm shrink-0">{$lang === 'zh' ? (item.name_zh || item.name_en) : item.name_en}</span>
-                    <span class="ingredient-dots"></span>
-                    <span class="text-text-muted text-xs shrink-0">{item.qty}</span>
-                  </div>
-                {/each}
+                <div class="flex flex-wrap gap-x-4 gap-y-1">
+                  {#each items as item}
+                    <span class="text-text text-sm">{$lang === 'zh' ? (item.name_zh || item.name_en) : item.name_en} <span class="text-text-muted/50">·</span> <span class="text-text-muted text-xs">{item.qty}</span></span>
+                  {/each}
+                </div>
               {/each}
             </div>
           {/if}

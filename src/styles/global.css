@@ -75,16 +75,6 @@
     @apply flex justify-between items-baseline py-1.5 border-b border-surface-lighter/20 last:border-0;
   }
 
-  .ingredient-row {
-    @apply flex items-center py-1.5 border-b border-surface-lighter/10 last:border-0 gap-2;
-  }
-
-  .ingredient-row .ingredient-dots {
-    @apply flex-1 min-w-[2rem] self-center;
-    height: 0;
-    border-bottom: 1px dashed;
-    border-color: rgba(107, 100, 89, 0.25);
-  }
 
   .section-title {
     @apply font-display text-3xl md:text-4xl font-medium text-text;
