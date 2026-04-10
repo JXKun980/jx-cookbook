@@ -50,6 +50,7 @@
   let initialFormState = '';
   let saving = false;
   let _editorBackdropDown = false;
+  let adminInitialLoad = true;
 
   // Custom tag creation
   interface CustomTagData {
@@ -206,6 +207,18 @@
     editableCategories = editableCategories;
   }
 
+  let _measureEl: HTMLSpanElement | null = null;
+  function tagInputWidth(text: string, min: number = 20): string {
+    if (!browser) return min + 'px';
+    if (!_measureEl) {
+      _measureEl = document.createElement('span');
+      _measureEl.style.cssText = 'position:absolute;visibility:hidden;white-space:pre;font:inherit;font-size:12px;';
+      document.body.appendChild(_measureEl);
+    }
+    _measureEl.textContent = text || 'WW';
+    return Math.max(min, _measureEl.offsetWidth + 8) + 'px';
+  }
+
   function removeEditorTag(ci: number, ti: number) {
     editableCategories[ci].tags.splice(ti, 1);
     editableCategories = [...editableCategories];
@@ -281,6 +294,8 @@
         await loadCustomTags();
         initTagEditor();
         observeFadeIns();
+        const onScroll = () => { adminInitialLoad = false; window.removeEventListener('scroll', onScroll); };
+        window.addEventListener('scroll', onScroll, { passive: true });
       } else {
         authError = true;
         setTimeout(() => { authError = false; }, 2000);
@@ -553,7 +568,7 @@
     await tick();
     const observer = new IntersectionObserver(
       (entries) => entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add('visible'); }),
-      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+      { threshold: 0.05 }
     );
     document.querySelectorAll('.fade-in:not(.visible)').forEach((el) => observer.observe(el));
   }
@@ -603,12 +618,12 @@
   </div>
 
   {#if activeTab === 'dishes'}
-    <div class="flex items-center justify-between mb-6 fade-in" style="transition-delay: 0.1s">
+    <div class="flex items-center justify-between mb-6 fade-in" style={adminInitialLoad ? 'transition-delay: 0.1s' : ''}>
       <h1 class="section-title text-2xl">{t('admin.manageDishes', $lang)}</h1>
       <button on:click={() => openEditor()} class="px-4 py-2 text-xs uppercase tracking-wider text-primary border border-primary/20 rounded-lg hover:bg-primary/5 cursor-pointer">{t('admin.newDish', $lang)}</button>
     </div>
 
-    <div class="flex gap-3 mb-4 fade-in" style="transition-delay: 0.2s">
+    <div class="flex gap-3 mb-4 fade-in" style={adminInitialLoad ? 'transition-delay: 0.2s' : ''}>
       <div class="relative flex-1">
         <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -624,14 +639,14 @@
 
     <!-- svelte-ignore a11y-click-events-have-key-events -->
     <!-- svelte-ignore a11y-no-static-element-interactions -->
-    <div class="flex items-center gap-3 mb-4 fade-in" style="transition-delay: 0.25s" on:click={() => { menu.showDishImages = !(menu.showDishImages !== false); menu = menu; fetch('/api/menu', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: password }, body: JSON.stringify(menu) }); }}>
+    <div class="flex items-center gap-3 mb-4 fade-in" style={adminInitialLoad ? 'transition-delay: 0.25s' : ''} on:click={() => { menu.showDishImages = !(menu.showDishImages !== false); menu = menu; fetch('/api/menu', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: password }, body: JSON.stringify(menu) }); }}>
       <div class="relative w-10 h-[22px] rounded-full transition-colors duration-300 cursor-pointer {menu.showDishImages !== false ? 'bg-primary' : 'bg-surface-lighter/50'}">
         <div class="absolute top-[3px] w-4 h-4 rounded-full bg-white shadow transition-transform duration-300 {menu.showDishImages !== false ? 'translate-x-[22px]' : 'translate-x-[3px]'}"></div>
       </div>
       <span class="text-text-muted text-xs cursor-pointer">{t('admin.showDishImages', $lang)}</span>
     </div>
 
-    <div class="space-y-2 mb-8 fade-in" style="transition-delay: 0.3s">
+    <div class="space-y-2 mb-8 fade-in" style={adminInitialLoad ? 'transition-delay: 0.3s' : ''}>
       {#if sortedDishes.length === 0}
         <p class="text-text-muted text-sm italic">{t('admin.noDishes', $lang)}</p>
       {:else}
@@ -652,7 +667,7 @@
 
   {#if activeTab === 'menu'}
     <h1 class="section-title text-2xl mb-6 fade-in">{t('admin.editMenu', $lang)}</h1>
-    <div class="bg-surface-light border border-surface-lighter/40 rounded-xl p-6 space-y-6 fade-in" style="transition-delay: 0.1s">
+    <div class="bg-surface-light border border-surface-lighter/40 rounded-xl p-6 space-y-6 fade-in" style={adminInitialLoad ? 'transition-delay: 0.1s' : ''}>
       <div>
         <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-1">{t('admin.date', $lang)}</label>
         <input type="date" bind:value={menu.date} class="px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm focus:outline-none focus:border-primary/30" />
@@ -718,21 +733,17 @@
             <input bind:value={editableCategories[ci].label_zh} placeholder={$lang === 'zh' ? '分类（中文）' : 'Category (中文)'} class="flex-1 min-w-0 px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm focus:outline-none focus:border-primary/30" />
             <button on:click={() => removeEditorCategory(ci)} class="text-[10px] text-red-400 uppercase tracking-wider cursor-pointer shrink-0 hover:text-red-300 hover:bg-red-400/10 self-end sm:self-center px-3 py-2 rounded-lg border border-red-400/20 bg-red-400/5 transition-all">{t('admin.remove', $lang)}</button>
           </div>
-          <div class="space-y-1.5">
-            <div class="grid grid-cols-[1fr_1fr_20px] gap-1.5 px-1">
-              <span class="text-text-muted/40 text-[9px] uppercase tracking-wider">{$lang === 'zh' ? '英文' : 'English'}</span>
-              <span class="text-text-muted/40 text-[9px] uppercase tracking-wider">{$lang === 'zh' ? '中文' : '中文'}</span>
-              <span></span>
-            </div>
+          <div class="flex flex-wrap gap-1.5">
             {#each cat.tags as tag, ti}
-              <div class="grid grid-cols-[1fr_1fr_20px] gap-1.5">
-                <input bind:value={editableCategories[ci].tags[ti].en} placeholder="English" class="min-w-0 px-2 py-1.5 bg-surface border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
-                <input bind:value={editableCategories[ci].tags[ti].zh} placeholder="中文" class="min-w-0 px-2 py-1.5 bg-surface border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
-                <button on:click={() => removeEditorTag(ci, ti)} class="text-red-400/50 hover:text-red-400 text-xs cursor-pointer flex items-center justify-center"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
-              </div>
+              <span class="inline-flex items-center rounded-full border border-surface-lighter/40 bg-surface text-xs">
+                <input bind:value={editableCategories[ci].tags[ti].en} placeholder="EN" class="tag-input-auto pl-2 pr-0.5 py-1 bg-transparent text-text text-xs focus:outline-none" style="width: {tagInputWidth(editableCategories[ci].tags[ti].en, 24)}" />
+                <span class="text-surface-lighter/40 text-[8px]">/</span>
+                <input bind:value={editableCategories[ci].tags[ti].zh} placeholder="中" class="tag-input-auto pl-0.5 pr-0.5 py-1 bg-transparent text-text-muted text-xs focus:outline-none" style="width: {tagInputWidth(editableCategories[ci].tags[ti].zh, 20)}" />
+                <button on:click={() => removeEditorTag(ci, ti)} class="text-text-muted/30 hover:text-red-400 pr-1.5 cursor-pointer"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+              </span>
             {/each}
+            <button on:click={() => addEditorTag(ci)} class="inline-flex items-center justify-center w-7 h-7 text-base text-primary/60 rounded-full border border-dashed border-primary/20 hover:border-primary/40 hover:text-primary cursor-pointer transition-all self-center">+</button>
           </div>
-          <button on:click={() => addEditorTag(ci)} class="w-full text-[10px] text-primary cursor-pointer py-1.5 border border-dashed border-primary/20 rounded hover:bg-primary/5 transition-colors">{t('admin.addNewTag', $lang)}</button>
         </div>
       {/each}
       <button on:click={addEditorCategory} class="w-full text-[10px] text-primary uppercase tracking-wider cursor-pointer py-2 border border-dashed border-primary/20 rounded-lg hover:bg-primary/5 transition-colors">{$lang === 'zh' ? '+ 添加分类' : '+ Add Category'}</button>

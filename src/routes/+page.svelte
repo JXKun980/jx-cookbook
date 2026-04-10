@@ -130,13 +130,17 @@
     link.click();
   }
 
+  let initialLoad = true;
+
   onMount(() => {
     const observer = new IntersectionObserver(
       (entries) => entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add('visible'); }),
-      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+      { threshold: 0.05 }
     );
     document.querySelectorAll('.fade-in').forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
+    const onScroll = () => { initialLoad = false; window.removeEventListener('scroll', onScroll); };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => { observer.disconnect(); window.removeEventListener('scroll', onScroll); };
   });
 </script>
 
@@ -169,7 +173,7 @@
       {#each courseOrder as course, courseIdx}
         {@const courseDishes = getDishesForCourse(course)}
         {#if courseDishes.length > 0}
-          <div class="fade-in" style="transition-delay: {(courseIdx + 1) * 0.15}s">
+          <div class="fade-in" style={initialLoad ? `transition-delay: ${(courseIdx + 1) * 0.15}s` : ''}>
             <div class="text-center mb-10">
               <p class="font-display text-base text-primary tracking-[0.3em] uppercase">{t(`course.${course}`, $lang)}</p>
             </div>
@@ -222,7 +226,7 @@
   {/if}
 
   <!-- Share Section -->
-  <div class="mt-24 pt-12 border-t border-surface-lighter/15 text-center fade-in" style="transition-delay: 0.8s">
+  <div class="mt-24 pt-12 border-t border-surface-lighter/15 text-center fade-in" style={initialLoad ? 'transition-delay: 0.8s' : ''}>
     <div class="flex justify-center gap-4">
       <button
         on:click={copyLink}
@@ -247,7 +251,7 @@
   </div>
 
   <!-- CTA -->
-  <div class="mt-12 text-center fade-in" style="transition-delay: 0.9s">
+  <div class="mt-12 text-center fade-in" style={initialLoad ? 'transition-delay: 0.9s' : ''}>
     <div class="inline-flex items-center gap-4 text-text-muted text-xs tracking-[0.2em] uppercase">
       <div class="h-px w-8 bg-surface-lighter"></div>
       <span>{t('menu.explore', $lang)}</span>

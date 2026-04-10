@@ -76,6 +76,16 @@
   }
 
 
+  .tag-input-auto {
+    field-sizing: content;
+  }
+
+  @supports (field-sizing: content) {
+    .tag-input-auto {
+      width: auto !important;
+    }
+  }
+
   .section-title {
     @apply font-display text-3xl md:text-4xl font-medium text-text;
   }

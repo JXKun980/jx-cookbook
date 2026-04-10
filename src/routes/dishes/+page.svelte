@@ -93,10 +93,11 @@
   onMount(async () => {
     observer = new IntersectionObserver(
       (entries) => entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add('visible'); }),
-      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+      { threshold: 0.05 }
     );
     document.querySelectorAll('.fade-in').forEach((el) => observer.observe(el));
-    setTimeout(() => { initialLoad = false; }, 1000);
+    const onScroll = () => { initialLoad = false; window.removeEventListener('scroll', onScroll); };
+    window.addEventListener('scroll', onScroll, { passive: true });
 
     // Check for ?open= param to auto-open a dish modal
     const openId = $page.url.searchParams.get('open');
@@ -135,7 +136,7 @@
   </p>
 </div>
 
-<div class="fade-in" style="transition-delay: 0.1s">
+<div class="fade-in" style={initialLoad ? 'transition-delay: 0.1s' : ''}>
   <FilterBar {allTags} on:filter={onFilter} />
 </div>
 
