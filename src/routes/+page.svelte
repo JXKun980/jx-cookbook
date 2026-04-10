@@ -1,6 +1,7 @@
 <script lang="ts">
   import { lang } from '$lib/stores';
   import { t } from '$lib/i18n';
+  import { getDietaryIcons } from '$lib/dietary';
   import { onMount } from 'svelte';
   import type { PageData } from './$types';
 
@@ -23,6 +24,23 @@
 
   function dishDesc(dish: typeof data.allDishes[0]) {
     return $lang === 'zh' ? (dish.description_zh || dish.description_en) : dish.description_en;
+  }
+
+  let modalOpen = false;
+  let modalDish: typeof data.allDishes[0] | null = null;
+
+  function openDishModal(dish: typeof data.allDishes[0]) {
+    modalDish = dish;
+    modalOpen = true;
+  }
+
+  function closeModal() {
+    modalOpen = false;
+    modalDish = null;
+  }
+
+  function handleKeydown(e: KeyboardEvent) {
+    if (e.key === 'Escape' && modalOpen) closeModal();
   }
 
   let showToast = false;
@@ -119,6 +137,8 @@
   <title>{menuTitle} — JX Cookbook</title>
 </svelte:head>
 
+<svelte:window on:keydown={handleKeydown} />
+
 <div class="max-w-3xl mx-auto">
   <!-- Header -->
   <div class="text-center mb-20 fade-in">
@@ -149,7 +169,9 @@
 
             <div class="space-y-10">
               {#each courseDishes as dish, dishIdx}
-                <div class="group flex flex-col md:flex-row items-center gap-6 md:gap-8">
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <!-- svelte-ignore a11y-no-static-element-interactions -->
+                <div class="group flex flex-col md:flex-row items-center gap-6 md:gap-8 cursor-pointer rounded-2xl p-4 -mx-4 border border-transparent transition-all duration-500 hover:border-primary/15 hover:bg-surface-light/30" on:click={() => openDishModal(dish)}>
                   <div class="shrink-0 {dishIdx % 2 === 1 ? 'md:order-2' : ''}">
                     <div class="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border border-primary/15 bg-surface-light flex items-center justify-center transition-all duration-500 group-hover:border-primary/30 group-hover:shadow-lg group-hover:shadow-primary/5">
                       {#if dish.hasImage}
@@ -229,3 +251,96 @@
     </div>
   </div>
 </div>
+
+<!-- Dish Detail Modal -->
+{#if modalOpen && modalDish}
+  {@const title = dishTitle(modalDish)}
+  {@const description = dishDesc(modalDish)}
+  {@const steps = $lang === 'zh' ? (modalDish.steps_zh || modalDish.steps_en) : modalDish.steps_en}
+  {@const dietary = getDietaryIcons(modalDish.ingredients, modalDish.flavour_profile, $lang)}
+  <!-- svelte-ignore a11y-click-events-have-key-events -->
+  <!-- svelte-ignore a11y-no-static-element-interactions -->
+  <div class="fixed inset-x-0 bottom-0 z-[200]" style="top: 4rem;">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4" on:click|self={closeModal}>
+      <div class="relative bg-surface-light border border-surface-lighter/40 rounded-xl max-w-2xl w-full shadow-2xl shadow-black/50 flex flex-col" style="max-height: calc(100vh - 4rem - 2rem);">
+        <button
+          on:click={closeModal}
+          class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-surface/50 border border-surface-lighter/30 text-text-muted hover:text-text hover:border-primary/30 transition-all cursor-pointer z-10"
+        >
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        <div class="p-6 space-y-5 overflow-y-auto flex-1 min-h-0">
+          {#if modalDish.hasImage}
+            <div class="w-full aspect-[16/9] rounded-lg overflow-hidden bg-surface-lighter/20">
+              <img src="/api/image?id={modalDish.id}" alt={title} class="w-full h-full object-cover" />
+            </div>
+          {/if}
+          <div>
+            <h2 class="font-display text-2xl font-medium text-text mb-2">{title}</h2>
+            {#if dietary.length > 0}
+              <div class="flex flex-wrap gap-1.5 mb-3">
+                {#each dietary as icon}
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-surface-lighter/30 text-text-muted">{icon.emoji} {icon.label}</span>
+                {/each}
+              </div>
+            {/if}
+            <p class="text-text-muted text-base leading-relaxed">{description}</p>
+          </div>
+
+          <div class="flex flex-wrap gap-1.5">
+            {#each modalDish.flavour_profile as tag}
+              <span class="flavour-tag">{t(`flavour.${tag}`, $lang)}</span>
+            {/each}
+          </div>
+
+          {#if Object.keys(modalDish.ingredients).length > 0}
+            <div class="pt-3 border-t border-surface-lighter/20">
+              <h4 class="text-xs font-semibold text-text-muted uppercase tracking-widest mb-2">{t('recipe.ingredients', $lang)}</h4>
+              {#each Object.entries(modalDish.ingredients) as [group, items]}
+                {#if group !== '_default'}
+                  <h5 class="text-xs font-semibold text-primary/70 uppercase tracking-widest mb-1 mt-3">{group}</h5>
+                {/if}
+                {#each items as item}
+                  <div class="flex items-center justify-between py-1 border-b border-surface-lighter/10">
+                    <span class="text-text text-sm">{$lang === 'zh' ? (item.name_zh || item.name_en) : item.name_en}</span>
+                    <span class="text-text-muted text-xs ml-3 whitespace-nowrap">{item.qty}</span>
+                  </div>
+                {/each}
+              {/each}
+            </div>
+          {/if}
+
+          {#if steps}
+            <div class="pt-3 border-t border-surface-lighter/20">
+              <h4 class="text-xs font-semibold text-text-muted uppercase tracking-widest mb-2">{t('recipe.steps', $lang)}</h4>
+              <div class="space-y-2">
+                {#each steps.split('\n').filter(Boolean) as step, i}
+                  <div class="flex gap-3">
+                    <span class="text-primary/40 text-xs font-mono mt-0.5 shrink-0">{String(i + 1).padStart(2, '0')}</span>
+                    <p class="text-text-muted text-sm leading-relaxed">{step}</p>
+                  </div>
+                {/each}
+              </div>
+            </div>
+          {/if}
+
+          <div class="pt-3 border-t border-surface-lighter/20">
+            <button
+              on:click={() => window.print()}
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium uppercase tracking-wider rounded-md bg-surface-lighter/20 text-text-muted hover:text-text hover:bg-surface-lighter/30 transition-all cursor-pointer"
+            >
+              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              </svg>
+              {t('recipe.print', $lang)}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{/if}

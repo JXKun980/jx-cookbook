@@ -5,6 +5,7 @@
   import FilterBar from '$lib/components/FilterBar.svelte';
   import { onMount } from 'svelte';
   import { browser } from '$app/environment';
+  import { page } from '$app/stores';
   import type { PageData } from './$types';
 
   export let data: PageData;
@@ -76,12 +77,36 @@
     if (e.key === 'Escape' && modalOpen) closeModal();
   }
 
-  onMount(() => {
+  onMount(async () => {
     const observer = new IntersectionObserver(
       (entries) => entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add('visible'); }),
       { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
     );
     document.querySelectorAll('.fade-in').forEach((el) => observer.observe(el));
+
+    // Check for ?open= param to auto-open a dish modal
+    const openId = $page.url.searchParams.get('open');
+    if (openId) {
+      const dish = data.allDishes.find(d => d.id === openId);
+      if (dish) {
+        const title = $lang === 'zh' ? (dish.title_zh || dish.title_en) : dish.title_en;
+        const description = $lang === 'zh' ? (dish.description_zh || dish.description_en) : dish.description_en;
+        const steps = $lang === 'zh' ? (dish.steps_zh || dish.steps_en) : dish.steps_en;
+        const { getDietaryIcons } = await import('$lib/dietary');
+        const dietary = getDietaryIcons(dish.ingredients, dish.flavour_profile, $lang);
+        modalData = {
+          id: dish.id,
+          title,
+          description,
+          flavours: dish.flavour_profile,
+          ingredients: dish.ingredients,
+          steps,
+          dietary,
+        };
+        modalOpen = true;
+      }
+    }
+
     return () => observer.disconnect();
   });
 </script>
@@ -135,6 +160,14 @@
         </button>
 
         <div class="p-6 space-y-5 overflow-y-auto flex-1 min-h-0">
+          {#if modalData.id}
+            {@const dish = data.allDishes.find(d => d.id === modalData.id)}
+            {#if dish?.hasImage}
+              <div class="w-full aspect-[16/9] rounded-lg overflow-hidden bg-surface-lighter/20">
+                <img src="/api/image?id={dish.id}" alt={modalData.title} class="w-full h-full object-cover" />
+              </div>
+            {/if}
+          {/if}
           <div>
             <h2 class="font-display text-2xl font-medium text-text mb-2">{modalData.title}</h2>
             {#if modalData.dietary?.length > 0}

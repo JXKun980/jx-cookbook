@@ -49,18 +49,18 @@
 <ParticlesBg />
 
 <nav class="fixed top-0 left-0 right-0 z-50 bg-surface/90 backdrop-blur-lg border-b border-surface-lighter/20">
-  <div class="max-w-6xl mx-auto px-6 flex items-center justify-between h-16">
-    <a href="/" class="text-primary text-3xl leading-none" style="font-family: 'Great Vibes', cursive;">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
+    <a href="/" class="text-primary text-2xl sm:text-3xl leading-none shrink-0" style="font-family: 'Great Vibes', cursive;">
       Junxian
     </a>
-    <div class="flex items-center gap-1">
+    <div class="flex items-center gap-0 sm:gap-1">
       <a href="/" class="nav-link" class:active={activePage === 'menu'}>{t('nav.menu', $lang)}</a>
       <a href="/dishes" class="nav-link" class:active={activePage === 'dishes'}>{t('nav.dishes', $lang)}</a>
       {#if authed || activePage === 'admin'}
         <a href="/admin" class="nav-link" class:active={activePage === 'admin'}>{t('nav.admin', $lang)}</a>
       {/if}
     </div>
-    <div class="flex items-center gap-2 ml-4">
+    <div class="flex items-center gap-2 ml-2 sm:ml-4 shrink-0">
       <button
         on:click={toggleLang}
         class="text-[10px] px-2 py-1 rounded border border-surface-lighter/30 text-text-muted hover:text-primary hover:border-primary/20 transition-all duration-300 cursor-pointer"
