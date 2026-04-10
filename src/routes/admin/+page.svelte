@@ -50,6 +50,82 @@
   let selectedCourses: string[] = [];
   let initialFormState = '';
   let saving = false;
+  let translating = false;
+  let translateLabel: 'idle' | 'translating' | 'done' | 'none' | 'error' = 'idle';
+
+  async function autoTranslate() {
+    const texts: { text: string; from: string; to: string; target: string }[] = [];
+
+    // Title
+    if (titleEn.trim() && !titleZh.trim()) texts.push({ text: titleEn, from: 'en', to: 'zh', target: 'titleZh' });
+    else if (titleZh.trim() && !titleEn.trim()) texts.push({ text: titleZh, from: 'zh', to: 'en', target: 'titleEn' });
+
+    // Description
+    if (descEn.trim() && !descZh.trim()) texts.push({ text: descEn, from: 'en', to: 'zh', target: 'descZh' });
+    else if (descZh.trim() && !descEn.trim()) texts.push({ text: descZh, from: 'zh', to: 'en', target: 'descEn' });
+
+    // Steps
+    if (stepsEn.trim() && !stepsZh.trim()) texts.push({ text: stepsEn, from: 'en', to: 'zh', target: 'stepsZh' });
+    else if (stepsZh.trim() && !stepsEn.trim()) texts.push({ text: stepsZh, from: 'zh', to: 'en', target: 'stepsEn' });
+
+    // Ingredients
+    ingredientGroups.forEach((g, gi) => {
+      g.items.forEach((item, ii) => {
+        if (item.name_en.trim() && !item.name_zh.trim()) texts.push({ text: item.name_en, from: 'en', to: 'zh', target: `ing:${gi}:${ii}:name_zh` });
+        else if (item.name_zh.trim() && !item.name_en.trim()) texts.push({ text: item.name_zh, from: 'zh', to: 'en', target: `ing:${gi}:${ii}:name_en` });
+      });
+      // Group name
+      if (g.name !== '_default' && g.name.trim() && !g.name_zh.trim()) texts.push({ text: g.name, from: 'en', to: 'zh', target: `grp:${gi}:name_zh` });
+      else if (g.name_zh.trim() && g.name === '_default') texts.push({ text: g.name_zh, from: 'zh', to: 'en', target: `grp:${gi}:name` });
+    });
+
+    if (texts.length === 0) {
+      translateLabel = 'none';
+      setTimeout(() => { translateLabel = 'idle'; }, 1500);
+      return;
+    }
+
+    translating = true;
+    translateLabel = 'translating';
+
+    try {
+      const res = await fetch('/api/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: password },
+        body: JSON.stringify({ texts: texts.map(t => ({ text: t.text, from: t.from, to: t.to })) })
+      });
+
+      if (!res.ok) throw new Error();
+      const { results } = await res.json();
+
+      results.forEach((translated: string, i: number) => {
+        if (!translated) return;
+        const target = texts[i].target;
+        if (target === 'titleEn') titleEn = translated;
+        else if (target === 'titleZh') titleZh = translated;
+        else if (target === 'descEn') descEn = translated;
+        else if (target === 'descZh') descZh = translated;
+        else if (target === 'stepsEn') stepsEn = translated;
+        else if (target === 'stepsZh') stepsZh = translated;
+        else if (target.startsWith('ing:')) {
+          const [, gi, ii, field] = target.split(':');
+          (ingredientGroups[+gi].items[+ii] as any)[field] = translated;
+        } else if (target.startsWith('grp:')) {
+          const [, gi, field] = target.split(':');
+          (ingredientGroups[+gi] as any)[field] = translated;
+        }
+      });
+      ingredientGroups = [...ingredientGroups];
+
+      translateLabel = 'done';
+      setTimeout(() => { translateLabel = 'idle'; }, 1500);
+    } catch {
+      translateLabel = 'error';
+      setTimeout(() => { translateLabel = 'idle'; }, 2000);
+    } finally {
+      translating = false;
+    }
+  }
 
   // Menu state
   let courseSearches: Record<string, string> = { appetizer: '', main: '', side: '', dessert: '' };
@@ -485,6 +561,11 @@
         <input type="date" bind:value={menu.date} class="px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm focus:outline-none focus:border-primary/30" />
       </div>
 
+      <label class="flex items-center gap-3 cursor-pointer">
+        <input type="checkbox" bind:checked={menu.showImages} class="w-4 h-4 rounded border-surface-lighter/40 bg-surface accent-primary cursor-pointer" />
+        <span class="text-text-muted text-xs">{t('admin.showImages', $lang)}</span>
+      </label>
+
       <div class="space-y-4">
         {#each COURSES as course}
           {@const selected = getMenuCourseDishes(course.key)}
@@ -529,23 +610,23 @@
     <h1 class="section-title text-2xl mb-6 fade-in">{t('admin.editFlavours', $lang)}</h1>
     <div class="space-y-4 fade-in" style="transition-delay: 0.1s">
       {#each flavourCategories as cat, ci}
-        <div class="bg-surface-light border border-surface-lighter/40 rounded-xl p-4 space-y-3">
-          <div class="flex items-center gap-3">
-            <input bind:value={flavourCategories[ci].label_en} placeholder={t('admin.categoryNameEn', $lang)} class="flex-1 px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm font-medium focus:outline-none focus:border-primary/30" />
-            <input bind:value={flavourCategories[ci].label_zh} placeholder={t('admin.categoryNameZh', $lang)} class="flex-1 px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm focus:outline-none focus:border-primary/30" />
-            <button on:click={() => removeFlavourCategory(ci)} class="text-[10px] text-red-400 cursor-pointer shrink-0 hover:text-red-300">{t('admin.remove', $lang)}</button>
+        <div class="bg-surface-light border border-surface-lighter/40 rounded-xl p-3 sm:p-4 space-y-3 overflow-hidden">
+          <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
+            <input bind:value={flavourCategories[ci].label_en} placeholder={t('admin.categoryNameEn', $lang)} class="flex-1 min-w-0 px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm font-medium focus:outline-none focus:border-primary/30" />
+            <input bind:value={flavourCategories[ci].label_zh} placeholder={t('admin.categoryNameZh', $lang)} class="flex-1 min-w-0 px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm focus:outline-none focus:border-primary/30" />
+            <button on:click={() => removeFlavourCategory(ci)} class="text-[10px] text-red-400 cursor-pointer shrink-0 hover:text-red-300 self-end sm:self-center">{t('admin.remove', $lang)}</button>
           </div>
           <div class="space-y-1.5">
-            <div class="grid grid-cols-[1fr_1fr_auto] gap-1.5 px-1">
+            <div class="grid grid-cols-[1fr_1fr_20px] gap-1.5 px-1">
               <span class="text-text-muted/40 text-[9px] uppercase tracking-wider">{t('admin.tagEn', $lang)}</span>
               <span class="text-text-muted/40 text-[9px] uppercase tracking-wider">{t('admin.tagZh', $lang)}</span>
-              <span class="w-5"></span>
+              <span></span>
             </div>
             {#each cat.tags as tag, ti}
-              <div class="grid grid-cols-[1fr_1fr_auto] gap-1.5">
-                <input bind:value={flavourCategories[ci].tags[ti].en} placeholder="English" class="px-2 py-1.5 bg-surface border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
-                <input bind:value={flavourCategories[ci].tags[ti].zh} placeholder="中文" class="px-2 py-1.5 bg-surface border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
-                <button on:click={() => removeFlavourTag(ci, ti)} class="text-red-400/50 hover:text-red-400 text-xs cursor-pointer w-5 flex items-center justify-center">✕</button>
+              <div class="grid grid-cols-[1fr_1fr_20px] gap-1.5">
+                <input bind:value={flavourCategories[ci].tags[ti].en} placeholder="English" class="min-w-0 px-2 py-1.5 bg-surface border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
+                <input bind:value={flavourCategories[ci].tags[ti].zh} placeholder="中文" class="min-w-0 px-2 py-1.5 bg-surface border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
+                <button on:click={() => removeFlavourTag(ci, ti)} class="text-red-400/50 hover:text-red-400 text-xs cursor-pointer flex items-center justify-center">✕</button>
               </div>
             {/each}
           </div>
@@ -688,9 +769,17 @@
           </div>
         </div>
 
-        <div class="flex gap-3 px-6 py-4 border-t border-surface-lighter/20 shrink-0">
+        <div class="flex items-center gap-3 px-6 py-4 border-t border-surface-lighter/20 shrink-0">
           <button on:click={saveDish} disabled={saving} class="px-5 py-2 text-xs uppercase tracking-wider text-surface bg-primary rounded-lg hover:bg-primary-light cursor-pointer font-medium" class:opacity-60={saving} class:pointer-events-none={saving}>{saving ? t('admin.saving', $lang) : t('admin.save', $lang)}</button>
           <button on:click={tryCloseEditor} class="px-5 py-2 text-xs uppercase tracking-wider text-text-muted border border-surface-lighter/40 rounded-lg hover:text-text cursor-pointer">{t('admin.cancel', $lang)}</button>
+          <div class="flex-1"></div>
+          <button
+            on:click={autoTranslate}
+            disabled={translating}
+            class="px-4 py-2 text-xs uppercase tracking-wider border rounded-lg cursor-pointer transition-all duration-300 {translateLabel === 'done' ? 'text-green-400 border-green-400/30' : translateLabel === 'error' ? 'text-red-400 border-red-400/30' : translateLabel === 'none' ? 'text-text-muted border-surface-lighter/40' : 'text-primary/70 border-primary/20 hover:border-primary/40 hover:text-primary'}"
+            class:opacity-60={translating}
+            class:pointer-events-none={translating}
+          >{t(translateLabel === 'translating' ? 'admin.translating' : translateLabel === 'done' ? 'admin.translateDone' : translateLabel === 'none' ? 'admin.translateNone' : translateLabel === 'error' ? 'admin.translateError' : 'admin.autoTranslate', $lang)}</button>
         </div>
       </div>
     </div>

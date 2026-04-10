@@ -21,6 +21,7 @@ export interface MenuConfig {
   date: string
   title_en: string
   title_zh: string
+  showImages?: boolean
   courses: {
     appetizer: string[]
     main: string[]

@@ -150,15 +150,6 @@
     <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
     <div class="absolute inset-0 flex items-center justify-center p-4" on:click|self={closeModal}>
       <div class="relative bg-surface-light border border-surface-lighter/40 rounded-xl max-w-2xl w-full shadow-2xl shadow-black/50 flex flex-col" style="max-height: calc(100vh - 4rem - 2rem);">
-        <button
-          on:click={closeModal}
-          class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-surface/50 border border-surface-lighter/30 text-text-muted hover:text-text hover:border-primary/30 transition-all cursor-pointer z-10"
-        >
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-
         <div class="p-6 space-y-5 overflow-y-auto flex-1 min-h-0">
           {#if modalData.id}
             {@const dish = data.allDishes.find(d => d.id === modalData.id)}
@@ -217,17 +208,21 @@
             </div>
           {/if}
 
-          <div class="pt-3 border-t border-surface-lighter/20">
-            <button
-              on:click={() => window.print()}
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium uppercase tracking-wider rounded-md bg-surface-lighter/20 text-text-muted hover:text-text hover:bg-surface-lighter/30 transition-all cursor-pointer"
-            >
-              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-              </svg>
-              {t('recipe.print', $lang)}
-            </button>
-          </div>
+        </div>
+        <div class="flex items-center justify-between px-6 py-4 border-t border-surface-lighter/20 shrink-0">
+          <button
+            on:click={() => window.print()}
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium uppercase tracking-wider rounded-md bg-surface-lighter/20 text-text-muted hover:text-text hover:bg-surface-lighter/30 transition-all cursor-pointer"
+          >
+            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+            {t('recipe.print', $lang)}
+          </button>
+          <button
+            on:click={closeModal}
+            class="px-5 py-2 text-xs uppercase tracking-wider text-text-muted border border-surface-lighter/40 rounded-lg hover:text-text hover:border-primary/30 transition-all cursor-pointer"
+          >{t('modal.close', $lang)}</button>
         </div>
       </div>
     </div>

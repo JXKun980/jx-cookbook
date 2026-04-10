@@ -218,6 +218,13 @@ const translations: Record<string, Record<Lang, string>> = {
   'admin.addTag': { en: '+ Tag', zh: '+ 标签' },
   'admin.addCategory': { en: '+ Add Category', zh: '+ 添加分类' },
   'admin.saveFlavours': { en: 'Save Flavours', zh: '保存风味' },
+  'admin.showImages': { en: 'Show photos on menu', zh: '在菜单中显示图片' },
+  'modal.close': { en: 'Close', zh: '关闭' },
+  'admin.autoTranslate': { en: '🌐 Auto Translate', zh: '🌐 自动翻译' },
+  'admin.translating': { en: 'Translating...', zh: '翻译中...' },
+  'admin.translateDone': { en: 'Translated!', zh: '翻译完成！' },
+  'admin.translateNone': { en: 'Nothing to translate', zh: '无需翻译' },
+  'admin.translateError': { en: 'Translation failed', zh: '翻译失败' },
 }
 
 export function t(key: string, lang: Lang): string {
