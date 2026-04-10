@@ -1,7 +1,7 @@
 <script lang="ts">
   import { auth, lang } from '$lib/stores';
   import { t } from '$lib/i18n';
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import { browser } from '$app/environment';
   import type { Dish, MenuConfig, Ingredient } from '$lib/types';
 
@@ -135,21 +135,39 @@
     return Object.entries(customData.tags).filter(([, v]) => v.category === catKey).map(([k]) => k);
   }
 
+  async function removeTagFromAllDishes(tagKey: string) {
+    const affected = dishes.filter(d => d.tags?.includes(tagKey));
+    for (const d of affected) {
+      d.tags = d.tags.filter(t => t !== tagKey);
+      await fetch('/api/dishes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: password },
+        body: JSON.stringify(d)
+      });
+    }
+    if (affected.length > 0) dishes = [...dishes];
+  }
+
   async function deleteCustomTag(key: string) {
     if (!confirm(t('admin.deleteTagConfirm', $lang))) return;
     delete customData.tags[key];
     customData = { ...customData };
     await saveCustomData();
+    await removeTagFromAllDishes(key);
   }
 
   async function deleteCustomCategory(catKey: string) {
     if (!confirm(t('admin.deleteCategoryConfirm', $lang))) return;
+    const tagsToRemove = Object.entries(customData.tags).filter(([, v]) => v.category === catKey).map(([k]) => k);
     customData.categories = customData.categories.filter(c => c.key !== catKey);
-    for (const [key, val] of Object.entries(customData.tags)) {
-      if (val.category === catKey) delete customData.tags[key];
+    for (const key of tagsToRemove) {
+      delete customData.tags[key];
     }
     customData = { ...customData };
     await saveCustomData();
+    for (const key of tagsToRemove) {
+      await removeTagFromAllDishes(key);
+    }
   }
 
   // Tag editor state
@@ -221,8 +239,8 @@
   }
 
   // Menu state
-  let courseSearches: Record<string, string> = { appetizer: '', main: '', side: '', dessert: '' };
-  let courseDropdownOpen: Record<string, boolean> = { appetizer: false, main: false, side: false, dessert: false };
+  let menuSearchInputs: Record<string, string> = { appetizer: '', main: '', side: '', dessert: '' };
+  let menuDropdownVis: Record<string, boolean> = { appetizer: false, main: false, side: false, dessert: false };
   let menuSaving = false;
   let menuSaveState: 'idle' | 'saving' | 'saved' = 'idle';
 
@@ -482,7 +500,7 @@
   }
 
   function getMenuDropdownDishes(courseKey: string): Dish[] {
-    const query = (courseSearches[courseKey] || '').toLowerCase().trim();
+    const query = (menuSearchInputs[courseKey] || '').toLowerCase().trim();
     if (!query) return [];
     const ids: string[] = (menu.courses as any)?.[courseKey] || [];
     return dishes.filter(d => !ids.includes(d.id) && (d.title_en.toLowerCase().includes(query) || (d.title_zh || '').toLowerCase().includes(query)));
@@ -492,8 +510,10 @@
     if (!menu.courses[courseKey]) menu.courses[courseKey] = [];
     (menu.courses[courseKey] as string[]).push(dishId);
     menu = { ...menu };
-    courseSearches[courseKey] = '';
-    courseDropdownOpen[courseKey] = false;
+    menuSearchInputs[courseKey] = '';
+    menuSearchInputs = { ...menuSearchInputs };
+    menuDropdownVis[courseKey] = false;
+    menuDropdownVis = { ...menuDropdownVis };
   }
 
   function removeDishFromCourse(courseKey: string, dishId: string) {
@@ -524,14 +544,13 @@
     if (e.key === 'Escape' && editorOpen) tryCloseEditor();
   }
 
-  function observeFadeIns() {
-    setTimeout(() => {
-      const observer = new IntersectionObserver(
-        (entries) => entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add('visible'); }),
-        { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
-      );
-      document.querySelectorAll('.fade-in:not(.visible)').forEach((el) => observer.observe(el));
-    }, 50);
+  async function observeFadeIns() {
+    await tick();
+    const observer = new IntersectionObserver(
+      (entries) => entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add('visible'); }),
+      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+    );
+    document.querySelectorAll('.fade-in:not(.visible)').forEach((el) => observer.observe(el));
   }
 
   onMount(() => {
@@ -645,13 +664,11 @@
 
       <div class="space-y-4">
         {#each COURSES as course}
-          {@const selected = getMenuCourseDishes(course.key)}
-          {@const dropdown = getMenuDropdownDishes(course.key)}
           <div class="bg-surface rounded-lg p-3 border border-surface-lighter/20">
             <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-2">{course.label}</label>
-            {#if selected.length > 0}
+            {#if getMenuCourseDishes(course.key).length > 0}
               <div class="flex flex-wrap gap-1.5 mb-2">
-                {#each selected as d}
+                {#each getMenuCourseDishes(course.key) as d}
                   <span class="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] rounded-full border bg-primary/20 border-primary/40 text-primary">
                     {d.title_en}
                     <button on:click={() => removeDishFromCourse(course.key, d.id)} class="ml-0.5 hover:text-red-400 cursor-pointer"><svg class="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
@@ -660,13 +677,14 @@
               </div>
             {/if}
             <div class="relative">
-              <input type="text" bind:value={courseSearches[course.key]} on:input={() => { courseDropdownOpen[course.key] = true }} on:focus={() => { courseDropdownOpen[course.key] = true }} placeholder={t('admin.searchToAdd', $lang)} class="w-full px-3 py-1.5 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs placeholder:text-text-muted/40 focus:outline-none focus:border-primary/30" />
-              {#if courseDropdownOpen[course.key] && courseSearches[course.key]?.trim()}
+              <input type="text" bind:value={menuSearchInputs[course.key]} on:input={() => { menuDropdownVis[course.key] = true; menuDropdownVis = menuDropdownVis; }} on:focus={() => { menuDropdownVis[course.key] = true; menuDropdownVis = menuDropdownVis; }} placeholder={t('admin.searchToAdd', $lang)} class="w-full px-3 py-1.5 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs placeholder:text-text-muted/40 focus:outline-none focus:border-primary/30" />
+              {#if menuDropdownVis[course.key] && menuSearchInputs[course.key]?.trim()}
+                {@const dropdownResults = getMenuDropdownDishes(course.key)}
                 <div class="absolute left-0 right-0 top-full mt-1 z-10 bg-surface-light border border-surface-lighter/40 rounded-lg shadow-lg shadow-black/40 max-h-[180px] overflow-y-auto">
-                  {#if dropdown.length === 0}
+                  {#if dropdownResults.length === 0}
                     <div class="px-3 py-2 text-text-muted/40 text-xs italic">{t('admin.noMatches', $lang)}</div>
                   {:else}
-                    {#each dropdown as d}
+                    {#each dropdownResults as d}
                       <button on:click={() => addDishToCourse(course.key, d.id)} class="w-full text-left px-3 py-2 text-xs text-text-muted hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer">
                         {d.title_en} <span class="text-text-muted/40">{d.title_zh || ''}</span>
                       </button>
