@@ -311,11 +311,15 @@
             <div class="pt-3 border-t border-surface-lighter/20">
               <h4 class="text-xs font-semibold text-text-muted uppercase tracking-widest mb-2">{t('recipe.steps', $lang)}</h4>
               <div class="space-y-2">
-                {#each steps.split('\n').filter(Boolean) as step, i}
-                  <div class="flex gap-3">
-                    <span class="text-primary/40 text-xs font-mono mt-0.5 shrink-0">{String(i + 1).padStart(2, '0')}</span>
-                    <p class="text-text-muted text-sm leading-relaxed">{step}</p>
-                  </div>
+                {#each steps.split('\n').filter(Boolean) as step}
+                  {#if step.startsWith('# ')}
+                    <h5 class="text-xs font-semibold text-primary/70 uppercase tracking-widest mt-4 mb-1">{step.slice(2)}</h5>
+                  {:else}
+                    <div class="flex gap-3">
+                      <span class="text-primary/40 text-xs mt-0.5 shrink-0">•</span>
+                      <p class="text-text-muted text-sm leading-relaxed">{step}</p>
+                    </div>
+                  {/if}
                 {/each}
               </div>
             </div>
