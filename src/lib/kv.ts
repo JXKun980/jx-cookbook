@@ -63,7 +63,7 @@ const mockDishes: Dish[] = [
 ]
 
 export function getKV(locals: App.Locals): KVNamespace | null {
-  return (locals as any).runtime?.env?.COOKBOOK_KV ?? null
+  return (locals as any).runtime?.env?.COOKBOOK_DATA ?? null
 }
 
 export async function getDishes(kv: KVNamespace | null): Promise<Dish[]> {

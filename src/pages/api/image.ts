@@ -3,7 +3,7 @@ import { getKV, getDishImage, saveDishImage } from '../../lib/kv'
 
 function checkAuth(request: Request, env: any): boolean {
   const password = request.headers.get('Authorization') || ''
-  const expected = env.COOKBOOK_PASSWORD || 'junxian'
+  const expected = env.ADMIN_PASSWORD || 'junxian'
   return password === expected
 }
 

@@ -1,10 +1,8 @@
 name = "jx-cookbook"
 compatibility_date = "2024-06-01"
 
-[vars]
-COOKBOOK_PASSWORD = "junxian"
+# ADMIN_PASSWORD is set as a Cloudflare secret
 
-# Uncomment below when you have a KV namespace created on Cloudflare
-# [[kv_namespaces]]
-# binding = "COOKBOOK_KV"
-# id = "<your-kv-namespace-id>"
+[[kv_namespaces]]
+binding = "COOKBOOK_DATA"
+id = ""  # Fill in your KV namespace ID
