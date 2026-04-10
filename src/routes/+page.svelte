@@ -204,7 +204,7 @@
             {#if courseIdx < courseOrder.length - 1}
               <div class="flex items-center justify-center mt-16">
                 <div class="h-px w-6 bg-primary/15"></div>
-                <span class="mx-4 text-primary/20 text-xs">✦</span>
+                <svg class="mx-4 w-3 h-3 text-primary/20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>
                 <div class="h-px w-6 bg-primary/15"></div>
               </div>
             {/if}
