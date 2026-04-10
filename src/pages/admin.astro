@@ -85,7 +85,7 @@ const lang = (Astro.url.searchParams.get('lang') as Lang) || 'en'
           </button>
         </div>
         <!-- Scrollable content -->
-        <div id="dish-editor" class="p-6 space-y-5 overflow-y-auto flex-1 min-h-0">
+        <div id="dish-editor" class="p-6 space-y-5 overflow-y-auto overflow-x-hidden flex-1 min-h-0">
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -117,15 +117,14 @@ const lang = (Astro.url.searchParams.get('lang') as Lang) || 'en'
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
             </button>
-            <div id="f-flavours" class="flex flex-wrap gap-1.5 mt-2 hidden"></div>
+            <div id="f-flavours-selected" class="flex flex-wrap gap-1.5 mt-2"></div>
+            <div id="f-flavours" class="mt-3 space-y-3 hidden"></div>
           </div>
 
           <div>
-            <div class="flex items-center justify-between mb-2">
-              <label class="text-text-muted text-[10px] uppercase tracking-wider">Ingredients</label>
-              <button id="add-group-btn" class="text-[10px] text-primary uppercase tracking-wider cursor-pointer hover:text-primary-light">+ Add Group</button>
-            </div>
+            <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-2">Ingredients</label>
             <div id="f-ingredients" class="space-y-4"></div>
+            <button id="add-group-btn" class="w-full mt-3 text-[10px] text-primary uppercase tracking-wider cursor-pointer py-2 border border-dashed border-primary/20 rounded-lg hover:bg-primary/5 transition-colors">+ Add Group</button>
           </div>
 
           <div id="steps-section" class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -145,6 +144,11 @@ const lang = (Astro.url.searchParams.get('lang') as Lang) || 'en'
               <input type="file" id="f-image" accept="image/*" class="text-text-muted text-sm file:mr-3 file:px-3 file:py-1.5 file:rounded-lg file:border file:border-surface-lighter/40 file:bg-surface file:text-text-muted file:text-xs file:cursor-pointer" />
               <img id="f-image-preview" class="hidden w-20 h-20 rounded-lg object-cover border border-surface-lighter/40" />
             </div>
+          </div>
+
+          <div>
+            <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-2">Courses</label>
+            <div id="f-courses" class="flex flex-wrap gap-1.5"></div>
           </div>
 
         </div>
@@ -172,6 +176,7 @@ const lang = (Astro.url.searchParams.get('lang') as Lang) || 'en'
   let menu: any = { date: '', title_en: "Today's Menu", title_zh: '今日菜单', courses: { appetizer: [], main: [], side: [], dessert: [] } }
   let editingId: string | null = null
   let imageDataUrl: string | null = null
+  let selectedCourses: string[] = []
   let initialFormState = ''
 
   function getFormState(): string {
@@ -185,6 +190,7 @@ const lang = (Astro.url.searchParams.get('lang') as Lang) || 'en'
       fl: selectedFlavours,
       ig: ingredientGroups,
       img: imageDataUrl,
+      co: selectedCourses,
     })
   }
 
@@ -296,15 +302,44 @@ const lang = (Astro.url.searchParams.get('lang') as Lang) || 'en'
   let selectedFlavours: string[] = []
   let flavoursExpanded = false
 
+  const FLAVOUR_CATEGORIES = [
+    { label: 'Taste', tags: ['savory','sweet','salty','sour','bitter','umami','tangy','tart','mild','briny','malty','caramelized','fermented','pickled','zesty','vinegary'] },
+    { label: 'Heat', tags: ['mild-spice','spicy','fiery','numbing','peppery','hot','smoky-spice','wasabi','chili-oil','mala'] },
+    { label: 'Texture', tags: ['crispy','crunchy','creamy','silky','chewy','tender','flaky','fluffy','velvety','crumbly','juicy','gelatinous','al-dente','crisp','melt-in-mouth','sticky','dense','airy'] },
+    { label: 'Richness', tags: ['rich','buttery','light','clean','hearty','decadent','delicate','luscious','velvety-rich','robust','subtle','bold','balanced'] },
+    { label: 'Aroma', tags: ['smoky','aromatic','herby','garlicky','citrusy','earthy','nutty','floral','fragrant','charred','woody','truffle','sesame','musky','grassy','toasty','caramel','vanilla','minty','gingery'] },
+    { label: 'Mood', tags: ['comfort','refreshing','warming','cooling','homestyle','indulgent','celebratory','rustic','elegant','nostalgic','street-food','fine-dining'] },
+    { label: 'Cuisine', tags: ['asian','chinese','japanese','korean','thai','southeast-asian','indian','western','french','italian','mediterranean','mexican','latin','middle-eastern','fusion'] },
+  ]
+
+  function renderFlavourPill(f: string): string {
+    return `<button type="button" class="flavour-toggle px-2.5 py-0.5 text-[10px] uppercase tracking-wider rounded-full border cursor-pointer transition-all duration-200
+      ${selectedFlavours.includes(f) ? 'bg-primary/20 border-primary/40 text-primary' : 'border-surface-lighter/40 text-text-muted hover:border-primary/20 hover:text-primary/70'}"
+      data-flavour="${f}">${f}</button>`
+  }
+
   function renderFlavours() {
+    // Selected tags (always visible)
+    const selectedContainer = document.getElementById('f-flavours-selected')!
+    if (selectedFlavours.length > 0) {
+      selectedContainer.innerHTML = selectedFlavours.map(f => renderFlavourPill(f)).join('')
+      selectedContainer.classList.remove('hidden')
+    } else {
+      selectedContainer.innerHTML = '<span class="text-text-muted/40 text-xs italic">None selected</span>'
+      selectedContainer.classList.remove('hidden')
+    }
+
+    // Categorized list (expanded view)
     const container = document.getElementById('f-flavours')!
-    container.innerHTML = FLAVOURS.map(f => `
-      <button type="button" class="flavour-toggle px-2.5 py-0.5 text-[10px] uppercase tracking-wider rounded-full border cursor-pointer transition-all duration-200
-        ${selectedFlavours.includes(f) ? 'bg-primary/20 border-primary/40 text-primary' : 'border-surface-lighter/40 text-text-muted hover:border-primary/20 hover:text-primary/70'}"
-        data-flavour="${f}">${f}</button>
+    container.innerHTML = FLAVOUR_CATEGORIES.map(cat => `
+      <div>
+        <p class="text-text-muted text-[10px] uppercase tracking-widest mb-1.5">${cat.label}</p>
+        <div class="flex flex-wrap gap-1.5">${cat.tags.map(f => renderFlavourPill(f)).join('')}</div>
+      </div>
     `).join('')
 
-    container.querySelectorAll('.flavour-toggle').forEach(btn => {
+    // Bind clicks on all pills
+    document.querySelectorAll('#f-flavours .flavour-toggle, #f-flavours-selected .flavour-toggle').forEach(btn => {
       btn.addEventListener('click', () => {
         const f = (btn as HTMLElement).dataset.flavour!
         if (selectedFlavours.includes(f)) selectedFlavours = selectedFlavours.filter(x => x !== f)
@@ -325,6 +360,24 @@ const lang = (Astro.url.searchParams.get('lang') as Lang) || 'en'
     if (stepsZh) stepsZh.rows = rows
   }
 
+  function renderCourses() {
+    const container = document.getElementById('f-courses')!
+    container.innerHTML = COURSES.map(c => `
+      <button type="button" class="course-toggle px-3 py-1.5 text-[10px] uppercase tracking-wider rounded-full border cursor-pointer transition-all duration-200
+        ${selectedCourses.includes(c.key) ? 'bg-primary/20 border-primary/40 text-primary' : 'border-surface-lighter/40 text-text-muted hover:border-primary/20 hover:text-primary/70'}"
+        data-course="${c.key}">${c.label}</button>
+    `).join('')
+
+    container.querySelectorAll('.course-toggle').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const k = (btn as HTMLElement).dataset.course!
+        if (selectedCourses.includes(k)) selectedCourses = selectedCourses.filter(x => x !== k)
+        else selectedCourses.push(k)
+        renderCourses()
+      })
+    })
+  }
+
   document.getElementById('flavour-toggle')!.addEventListener('click', () => {
     flavoursExpanded = !flavoursExpanded
     const container = document.getElementById('f-flavours')!
@@ -340,25 +393,20 @@ const lang = (Astro.url.searchParams.get('lang') as Lang) || 'en'
   function renderIngredients() {
     const container = document.getElementById('f-ingredients')!
     container.innerHTML = ingredientGroups.map((g, gi) => `
-      <div class="bg-surface rounded-lg p-3 border border-surface-lighter/20">
+      <div class="bg-surface rounded-lg p-3 border border-surface-lighter/20 overflow-hidden">
         <div class="flex items-center justify-between mb-2">
-          ${g.name === '_default'
-            ? '<span class="text-text-muted text-[10px] uppercase tracking-wider">Ingredients</span>'
-            : `<input value="${g.name}" onchange="updateGroupName(${gi}, this.value)" class="px-2 py-1 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30 w-40" placeholder="Group name" />`
-          }
-          <div class="flex gap-2">
-            <button onclick="addIngredient(${gi})" class="text-[10px] text-primary cursor-pointer">+ Item</button>
-            ${g.name !== '_default' ? `<button onclick="removeGroup(${gi})" class="text-[10px] text-red-400 cursor-pointer">Remove</button>` : ''}
-          </div>
+          <input value="${g.name === '_default' ? '' : g.name}" onchange="updateGroupName(${gi}, this.value || '_default')" class="px-2 py-1 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30 flex-1 min-w-0 max-w-[200px]" placeholder="Group name (optional)" />
+          <button onclick="removeGroup(${gi})" class="text-[10px] text-red-400 cursor-pointer ml-2 shrink-0">Remove</button>
         </div>
         ${g.items.map((item, ii) => `
-          <div class="flex gap-2 mb-1.5">
-            <input value="${item.name_en}" onchange="updateIngredient(${gi},${ii},'name_en',this.value)" placeholder="Ingredient (EN)" class="flex-1 px-2 py-1.5 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
-            <input value="${item.name_zh}" onchange="updateIngredient(${gi},${ii},'name_zh',this.value)" placeholder="食材 (中文)" class="flex-1 px-2 py-1.5 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
-            <input value="${item.qty}" onchange="updateIngredient(${gi},${ii},'qty',this.value)" placeholder="Qty" class="w-20 px-2 py-1.5 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
-            <button onclick="removeIngredient(${gi},${ii})" class="text-red-400/50 hover:text-red-400 text-xs cursor-pointer">✕</button>
+          <div class="flex flex-wrap gap-1.5 mb-1.5">
+            <input value="${item.name_en}" onchange="updateIngredient(${gi},${ii},'name_en',this.value)" placeholder="Ingredient (EN)" class="flex-1 min-w-0 px-2 py-1.5 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
+            <input value="${item.name_zh}" onchange="updateIngredient(${gi},${ii},'name_zh',this.value)" placeholder="食材 (中文)" class="flex-1 min-w-0 px-2 py-1.5 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
+            <input value="${item.qty}" onchange="updateIngredient(${gi},${ii},'qty',this.value)" placeholder="Qty" class="w-16 shrink-0 px-2 py-1.5 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
+            <button onclick="removeIngredient(${gi},${ii})" class="text-red-400/50 hover:text-red-400 text-xs cursor-pointer shrink-0">✕</button>
           </div>
         `).join('')}
+        <button onclick="addIngredient(${gi})" class="w-full text-[10px] text-primary cursor-pointer mt-2 py-1.5 border border-dashed border-primary/20 rounded hover:bg-primary/5 transition-colors">+ Item</button>
       </div>
     `).join('')
   }
@@ -382,6 +430,9 @@ const lang = (Astro.url.searchParams.get('lang') as Lang) || 'en'
     }))
     if (ingredientGroups.length === 0) ingredientGroups = [{ name: '_default', items: [{ name_en: '', name_zh: '', qty: '' }] }]
     renderIngredients()
+
+    selectedCourses = COURSES.map(c => c.key).filter(k => (menu.courses?.[k] || []).includes(id))
+    renderCourses()
 
     imageDataUrl = null
     const preview = document.getElementById('f-image-preview') as HTMLImageElement
@@ -433,6 +484,8 @@ const lang = (Astro.url.searchParams.get('lang') as Lang) || 'en'
     renderFlavours()
     ingredientGroups = [{ name: '_default', items: [{ name_en: '', name_zh: '', qty: '' }] }]
     renderIngredients()
+    selectedCourses = []
+    renderCourses()
     imageDataUrl = null
     ;(document.getElementById('f-image-preview') as HTMLImageElement).classList.add('hidden')
     document.getElementById('editor-title')!.textContent = 'New Dish'
@@ -509,6 +562,23 @@ const lang = (Astro.url.searchParams.get('lang') as Lang) || 'en'
       const idx = dishes.findIndex(d => d.id === id)
       if (idx >= 0) dishes[idx] = dish
       else dishes.push(dish)
+
+      // Update menu course assignments
+      COURSES.forEach(c => {
+        if (!menu.courses[c.key]) menu.courses[c.key] = []
+        const arr = menu.courses[c.key] as string[]
+        const inCourse = arr.includes(id)
+        const shouldBe = selectedCourses.includes(c.key)
+        if (shouldBe && !inCourse) arr.push(id)
+        else if (!shouldBe && inCourse) menu.courses[c.key] = arr.filter((x: string) => x !== id)
+      })
+      // Save menu to server
+      await fetch('/api/menu', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: password },
+        body: JSON.stringify(menu)
+      })
+
       renderDishList()
       closeEditorModal()
       renderMenuCourses()
@@ -518,29 +588,75 @@ const lang = (Astro.url.searchParams.get('lang') as Lang) || 'en'
   // Menu
   function renderMenuCourses() {
     const container = document.getElementById('menu-courses')!
-    container.innerHTML = COURSES.map(c => `
-      <div>
+    container.innerHTML = COURSES.map(c => {
+      const selectedIds: string[] = menu.courses?.[c.key] || []
+      const selectedDishes = dishes.filter(d => selectedIds.includes(d.id))
+      const unselectedDishes = dishes.filter(d => !selectedIds.includes(d.id))
+      return `
+      <div class="bg-surface rounded-lg p-3 border border-surface-lighter/20">
         <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-2">${c.label}</label>
-        <div class="flex flex-wrap gap-1.5">
-          ${dishes.map(d => {
-            const selected = (menu.courses?.[c.key] || []).includes(d.id)
-            return `<button type="button" class="menu-dish-toggle px-2.5 py-1 text-[10px] rounded-full border cursor-pointer transition-all
-              ${selected ? 'bg-primary/20 border-primary/40 text-primary' : 'border-surface-lighter/40 text-text-muted hover:border-primary/20'}"
-              data-course="${c.key}" data-dish="${d.id}">${d.title_en}</button>`
-          }).join('')}
+        ${selectedDishes.length > 0 ? `
+          <div class="flex flex-wrap gap-1.5 mb-2">
+            ${selectedDishes.map(d => `<span class="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] rounded-full border bg-primary/20 border-primary/40 text-primary">${d.title_en}<button type="button" class="menu-dish-remove ml-0.5 hover:text-red-400 cursor-pointer" data-course="${c.key}" data-dish="${d.id}">✕</button></span>`).join('')}
+          </div>
+        ` : ''}
+        <div class="relative">
+          <input type="text" class="menu-course-search w-full px-3 py-1.5 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs placeholder:text-text-muted/40 focus:outline-none focus:border-primary/30" placeholder="Search to add..." data-course="${c.key}" />
+          <div class="menu-course-dropdown hidden absolute left-0 right-0 top-full mt-1 z-10 bg-surface-light border border-surface-lighter/40 rounded-lg shadow-lg shadow-black/40 max-h-[180px] overflow-y-auto" data-course="${c.key}"></div>
         </div>
-      </div>
-    `).join('')
+      </div>`
+    }).join('')
 
-    container.querySelectorAll('.menu-dish-toggle').forEach(btn => {
+    // Remove selected dish
+    container.querySelectorAll('.menu-dish-remove').forEach(btn => {
       btn.addEventListener('click', () => {
         const course = (btn as HTMLElement).dataset.course!
         const dishId = (btn as HTMLElement).dataset.dish!
-        if (!menu.courses[course]) menu.courses[course] = []
-        const idx = menu.courses[course].indexOf(dishId)
-        if (idx >= 0) menu.courses[course].splice(idx, 1)
-        else menu.courses[course].push(dishId)
+        if (menu.courses[course]) {
+          const idx = menu.courses[course].indexOf(dishId)
+          if (idx >= 0) menu.courses[course].splice(idx, 1)
+        }
         renderMenuCourses()
+      })
+    })
+
+    // Search dropdown for each course
+    container.querySelectorAll<HTMLInputElement>('.menu-course-search').forEach(input => {
+      const course = input.dataset.course!
+      const dropdown = container.querySelector(`.menu-course-dropdown[data-course="${course}"]`) as HTMLElement
+
+      function updateDropdown() {
+        const query = input.value.toLowerCase().trim()
+        if (!query) { dropdown.classList.add('hidden'); return }
+        const selectedIds: string[] = menu.courses?.[course] || []
+        const results = dishes.filter(d => !selectedIds.includes(d.id) && (d.title_en.toLowerCase().includes(query) || (d.title_zh || '').toLowerCase().includes(query)))
+        if (results.length === 0) {
+          dropdown.innerHTML = '<div class="px-3 py-2 text-text-muted/40 text-xs italic">No matches</div>'
+        } else {
+          dropdown.innerHTML = results.map(d => `<button type="button" class="menu-dish-add w-full text-left px-3 py-2 text-xs text-text-muted hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer" data-course="${course}" data-dish="${d.id}">${d.title_en} <span class="text-text-muted/40">${d.title_zh || ''}</span></button>`).join('')
+        }
+        dropdown.classList.remove('hidden')
+
+        dropdown.querySelectorAll('.menu-dish-add').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const dishId = (btn as HTMLElement).dataset.dish!
+            if (!menu.courses[course]) menu.courses[course] = []
+            menu.courses[course].push(dishId)
+            input.value = ''
+            dropdown.classList.add('hidden')
+            renderMenuCourses()
+          })
+        })
+      }
+
+      input.addEventListener('input', updateDropdown)
+      input.addEventListener('focus', updateDropdown)
+    })
+
+    // Close dropdowns on outside click
+    document.addEventListener('click', (e) => {
+      container.querySelectorAll('.menu-course-dropdown').forEach(d => {
+        if (!(e.target as Element).closest('.relative')) d.classList.add('hidden')
       })
     })
   }
