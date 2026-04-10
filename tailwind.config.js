@@ -1,7 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
-    './src/**/*.{astro,html,js,ts}',
+    './src/**/*.{html,js,ts,svelte}',
   ],
   theme: {
     extend: {
