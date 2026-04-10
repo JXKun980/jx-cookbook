@@ -142,7 +142,7 @@
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {#each filteredDishes as dish, i (dish.id)}
       <div class="fade-in" style={initialLoad ? `transition-delay: ${(i + 1) * 0.08}s` : ''}>
-        <DishCard {dish} on:openmodal={openModal} on:favchange={onFavChange} />
+        <DishCard {dish} showImage={data.showDishImages} on:openmodal={openModal} on:favchange={onFavChange} />
       </div>
     {/each}
   </div>

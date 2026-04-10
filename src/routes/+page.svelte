@@ -186,12 +186,12 @@
                   </div>
                   {/if}
 
-                  <div class="text-center md:text-left flex-1 {dishIdx % 2 === 1 ? 'md:text-right' : ''}">
+                  <div class="flex-1 {data.menu.showImages !== false ? `text-center md:text-left ${dishIdx % 2 === 1 ? 'md:text-right' : ''}` : 'text-center'}">
                     <h3 class="font-display text-xl md:text-2xl text-text font-medium tracking-wide mb-2">{dishTitle(dish)}</h3>
-                    <p class="text-text-muted text-base leading-relaxed max-w-sm mx-auto md:mx-0 mb-3 italic">
+                    <p class="text-text-muted text-base leading-relaxed max-w-sm mx-auto {data.menu.showImages !== false ? 'md:mx-0' : ''} mb-3 italic">
                       {dishDesc(dish)}
                     </p>
-                    <div class="flex flex-wrap gap-2 justify-center {dishIdx % 2 === 1 ? 'md:justify-end' : 'md:justify-start'}">
+                    <div class="flex flex-wrap gap-2 justify-center {data.menu.showImages !== false && dishIdx % 2 === 1 ? 'md:justify-end' : data.menu.showImages !== false ? 'md:justify-start' : ''}">
                       {#each dish.flavour_profile as tag}
                         <span class="text-xs text-primary-dim uppercase tracking-[0.2em]">{t(`flavour.${tag}`, $lang)}</span>
                       {/each}

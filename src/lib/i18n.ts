@@ -219,6 +219,7 @@ const translations: Record<string, Record<Lang, string>> = {
   'admin.addCategory': { en: '+ Add Category', zh: '+ 添加分类' },
   'admin.saveFlavours': { en: 'Save Flavours', zh: '保存风味' },
   'admin.showImages': { en: 'Show photos on menu', zh: '在菜单中显示图片' },
+  'admin.showDishImages': { en: 'Show photos on dishes page', zh: '在菜品页显示图片' },
   'modal.close': { en: 'Close', zh: '关闭' },
   'admin.autoTranslate': { en: 'Auto Translate', zh: '自动翻译' },
   'admin.translating': { en: 'Translating...', zh: '翻译中...' },

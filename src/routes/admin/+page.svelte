@@ -534,6 +534,15 @@
       </select>
     </div>
 
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
+    <!-- svelte-ignore a11y-no-static-element-interactions -->
+    <div class="flex items-center gap-3 mb-4 fade-in" style="transition-delay: 0.25s" on:click={() => { menu.showDishImages = !(menu.showDishImages !== false); menu = menu; fetch('/api/menu', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: password }, body: JSON.stringify(menu) }); }}>
+      <div class="relative w-10 h-[22px] rounded-full transition-colors duration-300 cursor-pointer {menu.showDishImages !== false ? 'bg-primary' : 'bg-surface-lighter/50'}">
+        <div class="absolute top-[3px] w-4 h-4 rounded-full bg-white shadow transition-transform duration-300 {menu.showDishImages !== false ? 'translate-x-[22px]' : 'translate-x-[3px]'}"></div>
+      </div>
+      <span class="text-text-muted text-xs cursor-pointer">{t('admin.showDishImages', $lang)}</span>
+    </div>
+
     <div class="space-y-2 mb-8 fade-in" style="transition-delay: 0.3s">
       {#if sortedDishes.length === 0}
         <p class="text-text-muted text-sm italic">{t('admin.noDishes', $lang)}</p>

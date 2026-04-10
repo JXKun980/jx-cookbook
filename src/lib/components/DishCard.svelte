@@ -7,6 +7,7 @@
   import { browser } from '$app/environment';
 
   export let dish: Dish;
+  export let showImage: boolean = true;
 
   const dispatch = createEventDispatcher();
 
@@ -63,6 +64,7 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div class="dish-card group cursor-pointer" on:click={openModal}>
+  {#if showImage}
   <div class="dish-card-image">
     {#if dish.hasImage}
       <img src="/api/image?id={dish.id}" alt={title} class="absolute inset-0 w-full h-full object-cover" />
@@ -87,6 +89,22 @@
       </svg>
     </button>
   </div>
+  {:else}
+  <div class="px-4 pt-4 flex items-center justify-between">
+    <h3 class="font-display text-lg font-medium text-text leading-tight">{title}</h3>
+    <button
+      class="fav-btn w-8 h-8 flex items-center justify-center rounded-full bg-surface/50 border border-surface-lighter/30 transition-all duration-300 cursor-pointer shrink-0"
+      class:text-red-400={isFav}
+      class:text-text-muted={!isFav}
+      on:click={toggleFav}
+      aria-label="Toggle favourite"
+    >
+      <svg class="w-4 h-4" fill={isFav ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+      </svg>
+    </button>
+  </div>
+  {/if}
 
   <div class="p-4 space-y-3">
     {#if dietaryIcons.length > 0}
