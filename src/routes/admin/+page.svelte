@@ -668,6 +668,7 @@
       </div>
 
       <div class="space-y-4">
+        {#key menu}
         {#each COURSES as course}
           <div class="bg-surface rounded-lg p-3 border border-surface-lighter/20">
             <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-2">{course.label}</label>
@@ -700,6 +701,7 @@
             </div>
           </div>
         {/each}
+        {/key}
       </div>
 
       <button on:click={saveMenuFn} disabled={menuSaving} class="px-5 py-2 text-xs uppercase tracking-wider text-surface bg-primary rounded-lg hover:bg-primary-light cursor-pointer font-medium" class:opacity-60={menuSaving} class:pointer-events-none={menuSaving}>{t(menuSaveState === 'saving' ? 'admin.saving' : menuSaveState === 'saved' ? 'admin.saved' : 'admin.saveMenu', $lang)}</button>
@@ -707,8 +709,8 @@
   {/if}
 
   {#if activeTab === 'tags'}
-    <h1 class="section-title text-2xl mb-6 fade-in">{t('admin.manageTags', $lang)}</h1>
-    <div class="space-y-4 fade-in" style="transition-delay: 0.1s">
+    <h1 class="section-title text-2xl mb-6">{t('admin.manageTags', $lang)}</h1>
+    <div class="space-y-4">
       {#each editableCategories as cat, ci}
         <div class="bg-surface-light border border-surface-lighter/40 rounded-xl p-3 sm:p-4 space-y-3 overflow-hidden">
           <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
