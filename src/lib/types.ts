@@ -1,5 +1,6 @@
 export interface Ingredient {
-  name: string
+  name_en: string
+  name_zh: string
   qty: string
 }
 

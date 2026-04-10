@@ -1,8 +1,11 @@
 ---
 import Layout from '../layouts/Layout.astro'
+import type { Lang } from '../lib/types'
+
+const lang = (Astro.url.searchParams.get('lang') as Lang) || 'en'
 ---
 
-<Layout title="Admin" activePage="cookbook">
+<Layout title="Admin" activePage="admin" lang={lang}>
   <div id="admin-gate" class="fixed inset-0 z-[100] bg-surface flex items-center justify-center px-6">
     <div class="text-center max-w-xs w-full">
       <p class="text-text-muted text-xs uppercase tracking-[0.3em] mb-6">Admin Access</p>
@@ -33,71 +36,11 @@ import Layout from '../layouts/Layout.astro'
         </button>
       </div>
 
-      <div id="dish-list" class="space-y-2 mb-8"></div>
-
-      <!-- Dish Editor -->
-      <div id="dish-editor" class="hidden bg-surface-light border border-surface-lighter/40 rounded-xl p-6 space-y-5">
-        <h2 id="editor-title" class="font-display text-lg text-text">New Dish</h2>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-1">Title (EN)</label>
-            <input id="f-title-en" class="w-full px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm focus:outline-none focus:border-primary/30" />
-          </div>
-          <div>
-            <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-1">Title (中文)</label>
-            <input id="f-title-zh" class="w-full px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm focus:outline-none focus:border-primary/30" />
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-1">Description (EN)</label>
-            <textarea id="f-desc-en" rows="3" class="w-full px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm focus:outline-none focus:border-primary/30 resize-none"></textarea>
-          </div>
-          <div>
-            <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-1">Description (中文)</label>
-            <textarea id="f-desc-zh" rows="3" class="w-full px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm focus:outline-none focus:border-primary/30 resize-none"></textarea>
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-2">Flavour Profile</label>
-          <div id="f-flavours" class="flex flex-wrap gap-1.5"></div>
-        </div>
-
-        <div>
-          <div class="flex items-center justify-between mb-2">
-            <label class="text-text-muted text-[10px] uppercase tracking-wider">Ingredients</label>
-            <button id="add-group-btn" class="text-[10px] text-primary uppercase tracking-wider cursor-pointer hover:text-primary-light">+ Add Group</button>
-          </div>
-          <div id="f-ingredients" class="space-y-4"></div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-1">Steps (EN)</label>
-            <textarea id="f-steps-en" rows="6" class="w-full px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm focus:outline-none focus:border-primary/30 resize-none" placeholder="One step per line"></textarea>
-          </div>
-          <div>
-            <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-1">Steps (中文)</label>
-            <textarea id="f-steps-zh" rows="6" class="w-full px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm focus:outline-none focus:border-primary/30 resize-none" placeholder="每行一个步骤"></textarea>
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-2">Image</label>
-          <div class="flex items-center gap-4">
-            <input type="file" id="f-image" accept="image/*" class="text-text-muted text-sm file:mr-3 file:px-3 file:py-1.5 file:rounded-lg file:border file:border-surface-lighter/40 file:bg-surface file:text-text-muted file:text-xs file:cursor-pointer" />
-            <img id="f-image-preview" class="hidden w-20 h-20 rounded-lg object-cover border border-surface-lighter/40" />
-          </div>
-        </div>
-
-        <div class="flex gap-3 pt-2">
-          <button id="save-dish-btn" class="px-5 py-2 text-xs uppercase tracking-wider text-surface bg-primary rounded-lg hover:bg-primary-light cursor-pointer font-medium">Save</button>
-          <button id="cancel-dish-btn" class="px-5 py-2 text-xs uppercase tracking-wider text-text-muted border border-surface-lighter/40 rounded-lg hover:text-text cursor-pointer">Cancel</button>
-        </div>
+      <div class="mb-4">
+        <input type="text" id="admin-dish-search" placeholder="Search dishes..."
+          class="w-full px-4 py-2 bg-surface-light border border-surface-lighter/40 rounded-lg text-text text-sm placeholder:text-text-muted/40 focus:outline-none focus:border-primary/30" />
       </div>
+      <div id="dish-list" class="space-y-2 mb-8"></div>
     </div>
 
     <!-- Menu Tab -->
@@ -112,6 +55,82 @@ import Layout from '../layouts/Layout.astro'
         <div id="menu-courses" class="space-y-4"></div>
 
         <button id="save-menu-btn" class="px-5 py-2 text-xs uppercase tracking-wider text-surface bg-primary rounded-lg hover:bg-primary-light cursor-pointer font-medium">Save Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dish Editor Modal -->
+  <div id="dish-editor-modal" class="fixed inset-0 z-[200] hidden">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+    <div id="dish-editor-backdrop" class="absolute inset-0 flex items-start justify-center pt-24 pb-8 px-4 overflow-y-auto">
+      <div class="relative bg-surface-light border border-surface-lighter/40 rounded-xl max-w-3xl w-full shadow-2xl shadow-black/50">
+        <button id="dish-editor-close" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-surface/50 border border-surface-lighter/30 text-text-muted hover:text-text hover:border-primary/30 transition-all cursor-pointer z-10">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+        <div id="dish-editor" class="p-6 space-y-5">
+          <h2 id="editor-title" class="font-display text-lg text-text">New Dish</h2>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-1">Title (EN)</label>
+              <input id="f-title-en" class="w-full px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm focus:outline-none focus:border-primary/30" />
+            </div>
+            <div>
+              <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-1">Title (中文)</label>
+              <input id="f-title-zh" class="w-full px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm focus:outline-none focus:border-primary/30" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-1">Description (EN)</label>
+              <textarea id="f-desc-en" rows="3" class="w-full px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm focus:outline-none focus:border-primary/30 resize-none"></textarea>
+            </div>
+            <div>
+              <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-1">Description (中文)</label>
+              <textarea id="f-desc-zh" rows="3" class="w-full px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm focus:outline-none focus:border-primary/30 resize-none"></textarea>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-2">Flavour Profile</label>
+            <div id="f-flavours" class="flex flex-wrap gap-1.5"></div>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <label class="text-text-muted text-[10px] uppercase tracking-wider">Ingredients</label>
+              <button id="add-group-btn" class="text-[10px] text-primary uppercase tracking-wider cursor-pointer hover:text-primary-light">+ Add Group</button>
+            </div>
+            <div id="f-ingredients" class="space-y-4"></div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-1">Steps (EN)</label>
+              <textarea id="f-steps-en" rows="6" class="w-full px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm focus:outline-none focus:border-primary/30 resize-none" placeholder="One step per line"></textarea>
+            </div>
+            <div>
+              <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-1">Steps (中文)</label>
+              <textarea id="f-steps-zh" rows="6" class="w-full px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm focus:outline-none focus:border-primary/30 resize-none" placeholder="每行一个步骤"></textarea>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-2">Image</label>
+            <div class="flex items-center gap-4">
+              <input type="file" id="f-image" accept="image/*" class="text-text-muted text-sm file:mr-3 file:px-3 file:py-1.5 file:rounded-lg file:border file:border-surface-lighter/40 file:bg-surface file:text-text-muted file:text-xs file:cursor-pointer" />
+              <img id="f-image-preview" class="hidden w-20 h-20 rounded-lg object-cover border border-surface-lighter/40" />
+            </div>
+          </div>
+
+          <div class="flex gap-3 pt-2">
+            <button id="save-dish-btn" class="px-5 py-2 text-xs uppercase tracking-wider text-surface bg-primary rounded-lg hover:bg-primary-light cursor-pointer font-medium">Save</button>
+            <button id="cancel-dish-btn" class="px-5 py-2 text-xs uppercase tracking-wider text-text-muted border border-surface-lighter/40 rounded-lg hover:text-text cursor-pointer">Cancel</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -131,6 +150,43 @@ import Layout from '../layouts/Layout.astro'
   let menu: any = { date: '', title_en: "Today's Menu", title_zh: '今日菜单', courses: { appetizer: [], main: [], side: [], dessert: [] } }
   let editingId: string | null = null
   let imageDataUrl: string | null = null
+  let initialFormState = ''
+
+  function getFormState(): string {
+    return JSON.stringify({
+      te: (document.getElementById('f-title-en') as HTMLInputElement)?.value || '',
+      tz: (document.getElementById('f-title-zh') as HTMLInputElement)?.value || '',
+      de: (document.getElementById('f-desc-en') as HTMLTextAreaElement)?.value || '',
+      dz: (document.getElementById('f-desc-zh') as HTMLTextAreaElement)?.value || '',
+      se: (document.getElementById('f-steps-en') as HTMLTextAreaElement)?.value || '',
+      sz: (document.getElementById('f-steps-zh') as HTMLTextAreaElement)?.value || '',
+      fl: selectedFlavours,
+      ig: ingredientGroups,
+      img: imageDataUrl,
+    })
+  }
+
+  function isDirty(): boolean {
+    return getFormState() !== initialFormState
+  }
+
+  function openEditorModal() {
+    document.getElementById('dish-editor-modal')!.classList.remove('hidden')
+    document.body.style.overflow = 'hidden'
+    initialFormState = getFormState()
+  }
+
+  function closeEditorModal() {
+    document.getElementById('dish-editor-modal')!.classList.add('hidden')
+    document.body.style.overflow = ''
+  }
+
+  function tryCloseEditor() {
+    if (isDirty()) {
+      if (!confirm('You have unsaved changes. Discard them?')) return
+    }
+    closeEditorModal()
+  }
 
   // Auth
   const stored = localStorage.getItem('jx-cookbook-auth')
@@ -204,15 +260,12 @@ import Layout from '../layouts/Layout.astro'
     list.innerHTML = dishes.length === 0
       ? '<p class="text-text-muted text-sm italic">No dishes yet. Add your first one!</p>'
       : dishes.map(d => `
-        <div class="flex items-center justify-between px-4 py-3 bg-surface border border-surface-lighter/30 rounded-lg">
+        <div class="flex items-center justify-between px-4 py-3 bg-surface border border-surface-lighter/30 rounded-lg hover:border-primary/30 transition-colors cursor-pointer" onclick="editDish('${d.id}')">
           <div>
             <span class="text-text text-sm">${d.title_en}</span>
             <span class="text-text-muted text-xs ml-2">${d.title_zh || ''}</span>
           </div>
-          <div class="flex gap-2">
-            <button onclick="editDish('${d.id}')" class="text-[10px] text-primary uppercase tracking-wider cursor-pointer hover:text-primary-light">Edit</button>
-            <button onclick="deleteDish('${d.id}')" class="text-[10px] text-red-400 uppercase tracking-wider cursor-pointer hover:text-red-300">Delete</button>
-          </div>
+          <button onclick="event.stopPropagation(); deleteDish('${d.id}')" class="text-[10px] text-red-400 uppercase tracking-wider cursor-pointer hover:text-red-300">Delete</button>
         </div>
       `).join('')
   }
@@ -239,7 +292,7 @@ import Layout from '../layouts/Layout.astro'
   }
 
   // Ingredients
-  let ingredientGroups: { name: string; items: { name: string; qty: string }[] }[] = [{ name: '_default', items: [{ name: '', qty: '' }] }]
+  let ingredientGroups: { name: string; items: { name_en: string; name_zh: string; qty: string }[] }[] = [{ name: '_default', items: [{ name_en: '', name_zh: '', qty: '' }] }]
 
   function renderIngredients() {
     const container = document.getElementById('f-ingredients')!
@@ -257,7 +310,8 @@ import Layout from '../layouts/Layout.astro'
         </div>
         ${g.items.map((item, ii) => `
           <div class="flex gap-2 mb-1.5">
-            <input value="${item.name}" onchange="updateIngredient(${gi},${ii},'name',this.value)" placeholder="Ingredient" class="flex-1 px-2 py-1.5 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
+            <input value="${item.name_en}" onchange="updateIngredient(${gi},${ii},'name_en',this.value)" placeholder="Ingredient (EN)" class="flex-1 px-2 py-1.5 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
+            <input value="${item.name_zh}" onchange="updateIngredient(${gi},${ii},'name_zh',this.value)" placeholder="食材 (中文)" class="flex-1 px-2 py-1.5 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
             <input value="${item.qty}" onchange="updateIngredient(${gi},${ii},'qty',this.value)" placeholder="Qty" class="w-20 px-2 py-1.5 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
             <button onclick="removeIngredient(${gi},${ii})" class="text-red-400/50 hover:text-red-400 text-xs cursor-pointer">✕</button>
           </div>
@@ -283,7 +337,7 @@ import Layout from '../layouts/Layout.astro'
     ingredientGroups = Object.entries(dish.ingredients || {}).map(([name, items]) => ({
       name, items: (items as any[]).map(i => ({ ...i }))
     }))
-    if (ingredientGroups.length === 0) ingredientGroups = [{ name: '_default', items: [{ name: '', qty: '' }] }]
+    if (ingredientGroups.length === 0) ingredientGroups = [{ name: '_default', items: [{ name_en: '', name_zh: '', qty: '' }] }]
     renderIngredients()
 
     imageDataUrl = null
@@ -296,8 +350,7 @@ import Layout from '../layouts/Layout.astro'
     }
 
     document.getElementById('editor-title')!.textContent = 'Edit Dish'
-    document.getElementById('dish-editor')!.classList.remove('hidden')
-    document.getElementById('dish-editor')!.scrollIntoView({ behavior: 'smooth' })
+    openEditorModal()
   }
 
   ;(window as any).deleteDish = async (id: string) => {
@@ -313,14 +366,14 @@ import Layout from '../layouts/Layout.astro'
   }
 
   ;(window as any).updateGroupName = (gi: number, val: string) => { ingredientGroups[gi].name = val }
-  ;(window as any).addIngredient = (gi: number) => { ingredientGroups[gi].items.push({ name: '', qty: '' }); renderIngredients() }
+  ;(window as any).addIngredient = (gi: number) => { ingredientGroups[gi].items.push({ name_en: '', name_zh: '', qty: '' }); renderIngredients() }
   ;(window as any).removeIngredient = (gi: number, ii: number) => { ingredientGroups[gi].items.splice(ii, 1); renderIngredients() }
   ;(window as any).removeGroup = (gi: number) => { ingredientGroups.splice(gi, 1); renderIngredients() }
   ;(window as any).updateIngredient = (gi: number, ii: number, field: string, val: string) => { (ingredientGroups[gi].items[ii] as any)[field] = val }
 
   // Add group
   document.getElementById('add-group-btn')!.addEventListener('click', () => {
-    ingredientGroups.push({ name: 'New Group', items: [{ name: '', qty: '' }] })
+    ingredientGroups.push({ name: 'New Group', items: [{ name_en: '', name_zh: '', qty: '' }] })
     renderIngredients()
   })
 
@@ -335,18 +388,24 @@ import Layout from '../layouts/Layout.astro'
     ;(document.getElementById('f-steps-zh') as HTMLTextAreaElement).value = ''
     selectedFlavours = []
     renderFlavours()
-    ingredientGroups = [{ name: '_default', items: [{ name: '', qty: '' }] }]
+    ingredientGroups = [{ name: '_default', items: [{ name_en: '', name_zh: '', qty: '' }] }]
     renderIngredients()
     imageDataUrl = null
     ;(document.getElementById('f-image-preview') as HTMLImageElement).classList.add('hidden')
     document.getElementById('editor-title')!.textContent = 'New Dish'
-    document.getElementById('dish-editor')!.classList.remove('hidden')
-    document.getElementById('dish-editor')!.scrollIntoView({ behavior: 'smooth' })
+    openEditorModal()
   })
 
-  // Cancel
-  document.getElementById('cancel-dish-btn')!.addEventListener('click', () => {
-    document.getElementById('dish-editor')!.classList.add('hidden')
+  // Cancel / close editor
+  document.getElementById('cancel-dish-btn')!.addEventListener('click', tryCloseEditor)
+  document.getElementById('dish-editor-close')!.addEventListener('click', tryCloseEditor)
+  document.getElementById('dish-editor-backdrop')!.addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) tryCloseEditor()
+  })
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !document.getElementById('dish-editor-modal')!.classList.contains('hidden')) {
+      tryCloseEditor()
+    }
   })
 
   // Image upload
@@ -371,7 +430,7 @@ import Layout from '../layouts/Layout.astro'
     const id = editingId || title_en.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
     const ingredients: Record<string, any[]> = {}
     ingredientGroups.forEach(g => {
-      const filtered = g.items.filter(i => i.name.trim())
+      const filtered = g.items.filter(i => i.name_en.trim())
       if (filtered.length > 0) ingredients[g.name] = filtered
     })
 
@@ -408,7 +467,7 @@ import Layout from '../layouts/Layout.astro'
       if (idx >= 0) dishes[idx] = dish
       else dishes.push(dish)
       renderDishList()
-      document.getElementById('dish-editor')!.classList.add('hidden')
+      closeEditorModal()
       renderMenuCourses()
     }
   })
@@ -455,6 +514,16 @@ import Layout from '../layouts/Layout.astro'
       btn.textContent = 'Saved!'
       setTimeout(() => { btn.textContent = 'Save Menu' }, 1500)
     }
+  })
+
+  // Admin dish search
+  document.getElementById('admin-dish-search')!.addEventListener('input', (e) => {
+    const query = (e.target as HTMLInputElement).value.toLowerCase().trim()
+    const items = document.getElementById('dish-list')!.querySelectorAll<HTMLElement>(':scope > div')
+    items.forEach(item => {
+      const text = item.textContent?.toLowerCase() || ''
+      item.style.display = text.includes(query) ? '' : 'none'
+    })
   })
 
   renderIngredients()

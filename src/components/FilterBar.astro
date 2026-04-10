@@ -1,9 +1,13 @@
 ---
+import { t } from '../lib/i18n'
+import type { Lang } from '../lib/types'
+
 interface Props {
   allTags: string[]
+  lang?: Lang
 }
 
-const { allTags } = Astro.props
+const { allTags, lang = 'en' } = Astro.props
 ---
 
 <div class="space-y-4 mb-8">
@@ -15,31 +19,31 @@ const { allTags } = Astro.props
       <input
         type="text"
         id="search-input"
-        placeholder="Search dishes..."
+        placeholder={t('dishes.search', lang)}
         class="w-full pl-10 pr-4 py-2 bg-surface-light border border-surface-lighter/40 rounded-lg text-text text-sm placeholder:text-text-muted/40 focus:outline-none focus:border-primary/30 focus:ring-1 focus:ring-primary/10 transition-all duration-300"
       />
     </div>
 
     <div class="flex items-center gap-2">
-      <label class="text-text-muted text-xs uppercase tracking-wider">Sort:</label>
+      <label class="text-text-muted text-xs uppercase tracking-wider">{t('dishes.sort', lang)}</label>
       <select
         id="sort-select"
         class="bg-surface-light border border-surface-lighter/40 rounded-lg px-3 py-2 text-text text-sm focus:outline-none focus:border-primary/30 transition-all duration-300"
       >
-        <option value="name-asc">Name A-Z</option>
-        <option value="name-desc">Name Z-A</option>
+        <option value="name-asc">{t('dishes.sortAZ', lang)}</option>
+        <option value="name-desc">{t('dishes.sortZA', lang)}</option>
       </select>
     </div>
   </div>
 
   <div class="flex flex-wrap gap-2" id="filter-tags">
-    <button class="filter-btn active" data-filter="all">All</button>
+    <button class="filter-btn active" data-filter="all">{t('dishes.all', lang)}</button>
     {allTags.map((tag) => (
-      <button class="filter-btn" data-filter={tag}>{tag}</button>
+      <button class="filter-btn" data-filter={tag}>{t(`flavour.${tag}`, lang)}</button>
     ))}
   </div>
 </div>
 
 <div id="no-results" class="hidden text-center py-16">
-  <p class="text-text-muted text-lg italic">No dishes found.</p>
+  <p class="text-text-muted text-lg italic">{t('dishes.noResults', lang)}</p>
 </div>
