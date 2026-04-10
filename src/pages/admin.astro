@@ -36,9 +36,20 @@ const lang = (Astro.url.searchParams.get('lang') as Lang) || 'en'
         </button>
       </div>
 
-      <div class="mb-4">
-        <input type="text" id="admin-dish-search" placeholder="Search dishes..."
-          class="w-full px-4 py-2 bg-surface-light border border-surface-lighter/40 rounded-lg text-text text-sm placeholder:text-text-muted/40 focus:outline-none focus:border-primary/30" />
+      <div class="flex gap-3 mb-4">
+        <div class="relative flex-1">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input type="text" id="admin-dish-search" placeholder="Search dishes..."
+            class="w-full pl-10 pr-4 py-2 bg-surface-light border border-surface-lighter/40 rounded-lg text-text text-sm placeholder:text-text-muted/40 focus:outline-none focus:border-primary/30" />
+        </div>
+        <select id="admin-sort-select"
+          class="bg-surface-light border border-surface-lighter/40 rounded-lg px-3 py-2 text-text text-sm focus:outline-none focus:border-primary/30">
+          <option value="name-asc">Name A-Z</option>
+          <option value="name-desc">Name Z-A</option>
+          <option value="newest">Newest</option>
+        </select>
       </div>
       <div id="dish-list" class="space-y-2 mb-8"></div>
     </div>
@@ -137,7 +148,7 @@ const lang = (Astro.url.searchParams.get('lang') as Lang) || 'en'
 </Layout>
 
 <script>
-  const FLAVOURS = ['savory','sweet','salty','sour','bitter','umami','tangy','tart','mild','mild-spice','spicy','fiery','numbing','peppery','crispy','crunchy','creamy','silky','chewy','tender','flaky','fluffy','rich','buttery','light','clean','hearty','decadent','delicate','smoky','aromatic','herby','garlicky','citrusy','earthy','nutty','floral','fragrant','charred','comfort','refreshing','warming','cooling','homestyle','indulgent','asian','western','mediterranean','latin','fusion']
+  const FLAVOURS = ['savory','sweet','salty','sour','bitter','umami','tangy','tart','mild','briny','malty','caramelized','fermented','pickled','zesty','vinegary','mild-spice','spicy','fiery','numbing','peppery','hot','smoky-spice','wasabi','chili-oil','mala','crispy','crunchy','creamy','silky','chewy','tender','flaky','fluffy','velvety','crumbly','juicy','gelatinous','al-dente','crisp','melt-in-mouth','sticky','dense','airy','rich','buttery','light','clean','hearty','decadent','delicate','luscious','velvety-rich','robust','subtle','bold','balanced','smoky','aromatic','herby','garlicky','citrusy','earthy','nutty','floral','fragrant','charred','woody','truffle','sesame','musky','grassy','toasty','caramel','vanilla','minty','gingery','comfort','refreshing','warming','cooling','homestyle','indulgent','celebratory','rustic','elegant','nostalgic','street-food','fine-dining','asian','chinese','japanese','korean','thai','southeast-asian','indian','western','french','italian','mediterranean','mexican','latin','middle-eastern','fusion']
   const COURSES = [
     { key: 'appetizer', label: 'Appetizer' },
     { key: 'main', label: 'Main Course' },
@@ -516,15 +527,30 @@ const lang = (Astro.url.searchParams.get('lang') as Lang) || 'en'
     }
   })
 
-  // Admin dish search
-  document.getElementById('admin-dish-search')!.addEventListener('input', (e) => {
-    const query = (e.target as HTMLInputElement).value.toLowerCase().trim()
-    const items = document.getElementById('dish-list')!.querySelectorAll<HTMLElement>(':scope > div')
-    items.forEach(item => {
-      const text = item.textContent?.toLowerCase() || ''
-      item.style.display = text.includes(query) ? '' : 'none'
+  // Admin dish search & sort
+  function filterAndSortDishList() {
+    const query = (document.getElementById('admin-dish-search') as HTMLInputElement).value.toLowerCase().trim()
+    const sort = (document.getElementById('admin-sort-select') as HTMLSelectElement).value
+    const list = document.getElementById('dish-list')!
+    const items = Array.from(list.querySelectorAll<HTMLElement>(':scope > div'))
+
+    items.sort((a, b) => {
+      const aText = a.textContent?.trim() || ''
+      const bText = b.textContent?.trim() || ''
+      if (sort === 'name-asc') return aText.localeCompare(bText)
+      if (sort === 'name-desc') return bText.localeCompare(aText)
+      return 0 // newest = original insertion order
     })
-  })
+
+    items.forEach(item => {
+      list.appendChild(item)
+      const text = item.textContent?.toLowerCase() || ''
+      item.style.display = (!query || text.includes(query)) ? '' : 'none'
+    })
+  }
+
+  document.getElementById('admin-dish-search')!.addEventListener('input', filterAndSortDishList)
+  document.getElementById('admin-sort-select')!.addEventListener('change', filterAndSortDishList)
 
   renderIngredients()
 </script>

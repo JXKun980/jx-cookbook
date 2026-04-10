@@ -170,7 +170,12 @@ const sortedDishes = [...displayDishes].sort((a, b) => a.title.localeCompare(b.t
     favBtn.textContent = document.body.dataset.lang === 'zh' ? '❤️ 收藏' : '❤️ Favourites'
     filterContainer.insertBefore(favBtn, filterContainer.firstChild)
 
-    const filterBtns = filterContainer.querySelectorAll<HTMLButtonElement>('.filter-btn')
+    const expandedContainer = document.getElementById('filter-expanded')
+    const allFilterBtns = [
+      ...Array.from(filterContainer.querySelectorAll<HTMLButtonElement>('.filter-btn')),
+      ...(expandedContainer ? Array.from(expandedContainer.querySelectorAll<HTMLButtonElement>('.filter-btn')) : []),
+    ]
+    const filterBtns = allFilterBtns
 
     function getFavourites(): string[] {
       try { return JSON.parse(localStorage.getItem('jx-cookbook-favourites') || '[]') } catch { return [] }
