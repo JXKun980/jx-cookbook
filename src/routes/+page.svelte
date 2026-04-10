@@ -27,6 +27,7 @@
 
   let modalOpen = false;
   let modalDish: typeof data.allDishes[0] | null = null;
+  let _backdropDown = false;
 
   function openDishModal(dish: typeof data.allDishes[0]) {
     modalDish = dish;
@@ -170,7 +171,7 @@
               {#each courseDishes as dish, dishIdx}
                 <!-- svelte-ignore a11y-click-events-have-key-events -->
                 <!-- svelte-ignore a11y-no-static-element-interactions -->
-                <div class="group flex flex-col md:flex-row items-center gap-6 md:gap-8 cursor-pointer rounded-2xl p-4 -mx-4 border border-transparent transition-all duration-500 hover:border-primary/15 hover:bg-surface-light/30" on:click={() => openDishModal(dish)}>
+                <div class="group flex flex-col md:flex-row items-center gap-6 md:gap-8 cursor-pointer" on:click={() => openDishModal(dish)}>
                   {#if data.menu.showImages !== false}
                   <div class="shrink-0 {dishIdx % 2 === 1 ? 'md:order-2' : ''}">
                     <div class="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border border-primary/15 bg-surface-light flex items-center justify-center transition-all duration-500 group-hover:border-primary/30 group-hover:shadow-lg group-hover:shadow-primary/5">
@@ -262,7 +263,7 @@
   <!-- svelte-ignore a11y-no-static-element-interactions -->
   <div class="fixed inset-x-0 bottom-0 z-[200]" style="top: 4rem;">
     <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
-    <div class="absolute inset-0 flex items-center justify-center p-4" on:click|self={closeModal}>
+    <div class="absolute inset-0 flex items-center justify-center p-4" on:mousedown|self={() => { _backdropDown = true }} on:mouseup|self={() => { if (_backdropDown) closeModal(); _backdropDown = false }} on:click|self|preventDefault={() => {}}>
       <div class="relative bg-surface-light border border-surface-lighter/40 rounded-xl max-w-2xl w-full shadow-2xl shadow-black/50 flex flex-col" style="max-height: calc(100vh - 4rem - 2rem);">
        <div class="p-6 space-y-5 overflow-y-auto flex-1 min-h-0">
           {#if modalDish.hasImage}
@@ -283,16 +284,17 @@
           </div>
 
           {#if Object.keys(modalDish.ingredients).length > 0}
-            <div class="pt-3 border-t border-surface-lighter/20">
+            <div class="pt-3 border-t border-surface-lighter/20 max-w-xs">
               <h4 class="text-xs font-semibold text-text-muted uppercase tracking-widest mb-2">{t('recipe.ingredients', $lang)}</h4>
               {#each Object.entries(modalDish.ingredients) as [group, items]}
                 {#if group !== '_default'}
                   <h5 class="text-xs font-semibold text-primary/70 uppercase tracking-widest mb-1 mt-3">{group}</h5>
                 {/if}
                 {#each items as item}
-                  <div class="flex items-center justify-between py-1 border-b border-surface-lighter/10">
-                    <span class="text-text text-sm">{$lang === 'zh' ? (item.name_zh || item.name_en) : item.name_en}</span>
-                    <span class="text-text-muted text-xs ml-3 whitespace-nowrap">{item.qty}</span>
+                  <div class="ingredient-row">
+                    <span class="text-text text-sm shrink-0">{$lang === 'zh' ? (item.name_zh || item.name_en) : item.name_en}</span>
+                    <span class="ingredient-dots"></span>
+                    <span class="text-text-muted text-xs shrink-0">{item.qty}</span>
                   </div>
                 {/each}
               {/each}

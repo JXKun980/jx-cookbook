@@ -49,6 +49,7 @@
   let selectedCourses: string[] = [];
   let initialFormState = '';
   let saving = false;
+  let _editorBackdropDown = false;
 
   // Custom tag creation
   interface CustomTagData {
@@ -680,7 +681,7 @@
   <!-- svelte-ignore a11y-no-static-element-interactions -->
   <div class="fixed inset-x-0 bottom-0 z-[200]" style="top: 4rem;">
     <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
-    <div class="absolute inset-0 flex items-center justify-center p-4" on:click|self={tryCloseEditor}>
+    <div class="absolute inset-0 flex items-center justify-center p-4" on:mousedown|self={() => { _editorBackdropDown = true }} on:mouseup|self={() => { if (_editorBackdropDown) tryCloseEditor(); _editorBackdropDown = false }} on:click|self|preventDefault={() => {}}>
       <div class="relative bg-surface-light border border-surface-lighter/40 rounded-xl max-w-3xl w-full shadow-2xl shadow-black/50 flex flex-col" style="max-height: calc(100vh - 4rem - 2rem);">
         <div class="flex items-center justify-between px-6 pt-5 pb-3 border-b border-surface-lighter/20 shrink-0">
           <h2 class="font-display text-lg text-text">{editingId ? t('admin.editDish', $lang) : t('admin.newDishTitle', $lang)}</h2>

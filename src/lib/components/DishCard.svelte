@@ -31,9 +31,6 @@
   $: description = $lang === 'zh' ? (dish.description_zh || dish.description_en) : dish.description_en;
   $: steps = $lang === 'zh' ? (dish.steps_zh || dish.steps_en) : dish.steps_en;
 
-  $: allIngredients = Object.values(dish.ingredients).flat();
-  $: ingredientSummary = allIngredients.map((i) => $lang === 'zh' ? (i.name_zh || i.name_en) : i.name_en).slice(0, 5).join(', ');
-  $: moreCount = Math.max(0, allIngredients.length - 5);
 
   function toggleFav(e: Event) {
     e.stopPropagation();
@@ -112,10 +109,6 @@
       {/each}
     </div>
 
-    <div class="pt-2 border-t border-surface-lighter/20">
-      <p class="text-text-muted/60 text-xs">
-        {ingredientSummary}{#if moreCount > 0}{$lang === 'zh' ? `，+${moreCount} 更多` : `, +${moreCount} more`}{/if}
-      </p>
-    </div>
+
   </div>
 </div>
