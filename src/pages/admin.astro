@@ -71,10 +71,10 @@ const lang = (Astro.url.searchParams.get('lang') as Lang) || 'en'
   </div>
 
   <!-- Dish Editor Modal -->
-  <div id="dish-editor-modal" class="fixed inset-0 z-[200] hidden">
+  <div id="dish-editor-modal" class="fixed inset-x-0 bottom-0 z-[200] hidden" style="top: 4rem;">
     <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
     <div id="dish-editor-backdrop" class="absolute inset-0 flex items-center justify-center p-4">
-      <div class="relative bg-surface-light border border-surface-lighter/40 rounded-xl max-w-3xl w-full shadow-2xl shadow-black/50 flex flex-col" style="max-height: calc(100vh - 2rem);">
+      <div class="relative bg-surface-light border border-surface-lighter/40 rounded-xl max-w-3xl w-full shadow-2xl shadow-black/50 flex flex-col" style="max-height: calc(100vh - 4rem - 2rem);">
         <!-- Fixed header -->
         <div class="flex items-center justify-between px-6 pt-5 pb-3 border-b border-surface-lighter/20 shrink-0">
           <h2 id="editor-title" class="font-display text-lg text-text">New Dish</h2>
