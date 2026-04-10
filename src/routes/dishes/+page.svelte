@@ -3,17 +3,14 @@
   import { t } from '$lib/i18n';
   import DishCard from '$lib/components/DishCard.svelte';
   import FilterBar from '$lib/components/FilterBar.svelte';
-  import { onMount } from 'svelte';
+  import { onMount, afterUpdate } from 'svelte';
   import { browser } from '$app/environment';
   import { page } from '$app/stores';
   import type { PageData } from './$types';
 
   export let data: PageData;
 
-  let search = '';
-  let sort = 'name-asc';
-  let activeFilter = 'all';
-  let showFavsOnly = false;
+  let filterState = { search: '', sort: 'name-asc', activeFilter: 'all', showFavsOnly: false };
   let favVersion = 0;
 
   $: allTags = [...new Set(data.allDishes.flatMap((d) => d.flavour_profile))].sort();
@@ -23,14 +20,17 @@
     try { return JSON.parse(localStorage.getItem('jx-cookbook-favourites') || '[]'); } catch { return []; }
   }
 
-  $: filteredDishes = (() => {
-    // Reference favVersion to trigger reactivity
+  let filteredDishes: typeof data.allDishes = [];
+
+  $: {
+    const { search, sort, activeFilter, showFavsOnly } = filterState;
     void favVersion;
+    const currentLang = $lang;
     const favs = getFavourites();
     const searchLower = search.toLowerCase().trim();
 
-    let result = data.allDishes.filter(d => {
-      const title = ($lang === 'zh' ? (d.title_zh || d.title_en) : d.title_en).toLowerCase();
+    const result = data.allDishes.filter(d => {
+      const title = (currentLang === 'zh' ? (d.title_zh || d.title_en) : d.title_en).toLowerCase();
       const matchesSearch = !searchLower || title.includes(searchLower);
       const matchesFilter = activeFilter === 'all' || d.flavour_profile.includes(activeFilter);
       const matchesFavs = !showFavsOnly || favs.includes(d.title_en);
@@ -38,21 +38,18 @@
     });
 
     result.sort((a, b) => {
-      const aTitle = $lang === 'zh' ? (a.title_zh || a.title_en) : a.title_en;
-      const bTitle = $lang === 'zh' ? (b.title_zh || b.title_en) : b.title_en;
+      const aTitle = currentLang === 'zh' ? (a.title_zh || a.title_en) : a.title_en;
+      const bTitle = currentLang === 'zh' ? (b.title_zh || b.title_en) : b.title_en;
       if (sort === 'name-asc') return aTitle.localeCompare(bTitle);
       if (sort === 'name-desc') return bTitle.localeCompare(aTitle);
       return 0;
     });
 
-    return result;
-  })();
+    filteredDishes = result;
+  }
 
   function onFilter(e: CustomEvent) {
-    search = e.detail.search;
-    sort = e.detail.sort;
-    activeFilter = e.detail.activeFilter;
-    showFavsOnly = e.detail.showFavsOnly;
+    filterState = { ...e.detail };
   }
 
   function onFavChange() {
@@ -77,12 +74,21 @@
     if (e.key === 'Escape' && modalOpen) closeModal();
   }
 
+  let initialLoad = true;
+  let observer: IntersectionObserver;
+
+  afterUpdate(() => {
+    if (!observer) return;
+    document.querySelectorAll('.fade-in:not(.visible)').forEach((el) => observer.observe(el));
+  });
+
   onMount(async () => {
-    const observer = new IntersectionObserver(
+    observer = new IntersectionObserver(
       (entries) => entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add('visible'); }),
       { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
     );
     document.querySelectorAll('.fade-in').forEach((el) => observer.observe(el));
+    setTimeout(() => { initialLoad = false; }, 1000);
 
     // Check for ?open= param to auto-open a dish modal
     const openId = $page.url.searchParams.get('open');
@@ -135,7 +141,7 @@
 {:else}
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {#each filteredDishes as dish, i (dish.id)}
-      <div class="fade-in" style="transition-delay: {(i + 1) * 0.08}s">
+      <div class="fade-in" style={initialLoad ? `transition-delay: ${(i + 1) * 0.08}s` : ''}>
         <DishCard {dish} on:openmodal={openModal} on:favchange={onFavChange} />
       </div>
     {/each}
