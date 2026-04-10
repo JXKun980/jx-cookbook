@@ -16,14 +16,15 @@
 
     interface Particle { x: number; y: number; r: number; vx: number; vy: number; o: number; phase: number }
 
+    const isMobile = window.innerWidth < 768;
     const bokehCount = Math.max(3, Math.min(10, Math.floor(window.innerWidth / 150)));
     const bokehs: Particle[] = Array.from({ length: bokehCount }, () => ({
       x: Math.random() * w,
       y: Math.random() * h,
-      r: Math.random() * 100 + 50,
+      r: isMobile ? Math.random() * 120 + 80 : Math.random() * 100 + 50,
       vx: (Math.random() - 0.5) * 0.08,
       vy: (Math.random() - 0.5) * 0.06,
-      o: Math.random() * 0.06 + 0.04,
+      o: isMobile ? Math.random() * 0.08 + 0.08 : Math.random() * 0.06 + 0.04,
       phase: Math.random() * Math.PI * 2,
     }));
 
