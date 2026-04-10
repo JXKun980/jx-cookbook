@@ -39,6 +39,7 @@
       showFavsOnly = !showFavsOnly;
     } else {
       activeFilter = tag;
+      showFavsOnly = false;
     }
     emitFilter();
   }
@@ -88,10 +89,10 @@
       on:click={() => setFilter('all')}
     >{t('dishes.all', $lang)}</button>
     <button
-      class="filter-btn"
+      class="filter-btn inline-flex items-center gap-1"
       class:active={showFavsOnly}
       on:click={() => setFilter('favs')}
-    >{t('dishes.favourites', $lang)}</button>
+    ><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg> {t('dishes.favourites', $lang)}</button>
     {#each popularAvailable as tag}
       <button
         class="filter-btn"

@@ -561,10 +561,14 @@
         <input type="date" bind:value={menu.date} class="px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm focus:outline-none focus:border-primary/30" />
       </div>
 
-      <label class="flex items-center gap-3 cursor-pointer">
-        <input type="checkbox" bind:checked={menu.showImages} class="w-4 h-4 rounded border-surface-lighter/40 bg-surface accent-primary cursor-pointer" />
+      <!-- svelte-ignore a11y-click-events-have-key-events -->
+      <!-- svelte-ignore a11y-no-static-element-interactions -->
+      <div class="flex items-center gap-3 cursor-pointer" on:click={() => { menu.showImages = !menu.showImages; menu = menu; }}>
+        <div class="relative w-10 h-[22px] rounded-full transition-colors duration-300 {menu.showImages ? 'bg-primary' : 'bg-surface-lighter/50'}">
+          <div class="absolute top-[3px] w-4 h-4 rounded-full bg-white shadow transition-transform duration-300 {menu.showImages ? 'translate-x-[22px]' : 'translate-x-[3px]'}"></div>
+        </div>
         <span class="text-text-muted text-xs">{t('admin.showImages', $lang)}</span>
-      </label>
+      </div>
 
       <div class="space-y-4">
         {#each COURSES as course}
@@ -577,7 +581,7 @@
                 {#each selected as d}
                   <span class="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] rounded-full border bg-primary/20 border-primary/40 text-primary">
                     {d.title_en}
-                    <button on:click={() => removeDishFromCourse(course.key, d.id)} class="ml-0.5 hover:text-red-400 cursor-pointer">✕</button>
+                    <button on:click={() => removeDishFromCourse(course.key, d.id)} class="ml-0.5 hover:text-red-400 cursor-pointer"><svg class="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
                   </span>
                 {/each}
               </div>
@@ -614,7 +618,7 @@
           <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <input bind:value={flavourCategories[ci].label_en} placeholder={t('admin.categoryNameEn', $lang)} class="flex-1 min-w-0 px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm font-medium focus:outline-none focus:border-primary/30" />
             <input bind:value={flavourCategories[ci].label_zh} placeholder={t('admin.categoryNameZh', $lang)} class="flex-1 min-w-0 px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm focus:outline-none focus:border-primary/30" />
-            <button on:click={() => removeFlavourCategory(ci)} class="text-[10px] text-red-400 cursor-pointer shrink-0 hover:text-red-300 self-end sm:self-center">{t('admin.remove', $lang)}</button>
+            <button on:click={() => removeFlavourCategory(ci)} class="text-[10px] text-red-400 uppercase tracking-wider cursor-pointer shrink-0 hover:text-red-300 hover:bg-red-400/10 self-end sm:self-center px-3 py-2 rounded-lg border border-red-400/20 bg-red-400/5 transition-all">{t('admin.remove', $lang)}</button>
           </div>
           <div class="space-y-1.5">
             <div class="grid grid-cols-[1fr_1fr_20px] gap-1.5 px-1">
@@ -626,7 +630,7 @@
               <div class="grid grid-cols-[1fr_1fr_20px] gap-1.5">
                 <input bind:value={flavourCategories[ci].tags[ti].en} placeholder="English" class="min-w-0 px-2 py-1.5 bg-surface border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
                 <input bind:value={flavourCategories[ci].tags[ti].zh} placeholder="中文" class="min-w-0 px-2 py-1.5 bg-surface border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
-                <button on:click={() => removeFlavourTag(ci, ti)} class="text-red-400/50 hover:text-red-400 text-xs cursor-pointer flex items-center justify-center">✕</button>
+                <button on:click={() => removeFlavourTag(ci, ti)} class="text-red-400/50 hover:text-red-400 text-xs cursor-pointer flex items-center justify-center"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
               </div>
             {/each}
           </div>
@@ -721,14 +725,14 @@
                   <div class="flex items-center justify-between mb-2">
                     <input value={group.name === '_default' ? '' : group.name} on:change={(e) => { ingredientGroups[gi].name = e.currentTarget.value || '_default'; ingredientGroups = ingredientGroups; }} class="px-2 py-1 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30 flex-1 min-w-0 max-w-[150px]" placeholder="Group (EN)" />
                     <input bind:value={ingredientGroups[gi].name_zh} class="px-2 py-1 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30 flex-1 min-w-0 max-w-[150px]" placeholder="分组（中文）" />
-                    <button on:click={() => removeGroup(gi)} class="text-[10px] text-red-400 cursor-pointer ml-2 shrink-0">{t('admin.remove', $lang)}</button>
+                    <button on:click={() => removeGroup(gi)} class="text-[10px] text-red-400 uppercase tracking-wider cursor-pointer ml-2 shrink-0 px-2.5 py-1 rounded border border-red-400/20 bg-red-400/5 hover:bg-red-400/10 hover:text-red-300 transition-all">{t('admin.remove', $lang)}</button>
                   </div>
                   {#each group.items as item, ii}
                     <div class="flex flex-wrap gap-1.5 mb-1.5">
                       <input bind:value={ingredientGroups[gi].items[ii].name_en} placeholder={t('admin.ingredientEn', $lang)} class="flex-1 min-w-0 px-2 py-1.5 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
                       <input bind:value={ingredientGroups[gi].items[ii].name_zh} placeholder={t('admin.ingredientZh', $lang)} class="flex-1 min-w-0 px-2 py-1.5 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
                       <input bind:value={ingredientGroups[gi].items[ii].qty} placeholder="Qty" class="w-16 shrink-0 px-2 py-1.5 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
-                      <button on:click={() => removeIngredient(gi, ii)} class="text-red-400/50 hover:text-red-400 text-xs cursor-pointer shrink-0">✕</button>
+                      <button on:click={() => removeIngredient(gi, ii)} class="text-red-400/50 hover:text-red-400 text-xs cursor-pointer shrink-0"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
                     </div>
                   {/each}
                   <button on:click={() => addIngredient(gi)} class="w-full text-[10px] text-primary cursor-pointer mt-2 py-1.5 border border-dashed border-primary/20 rounded hover:bg-primary/5 transition-colors">{t('admin.addItem', $lang)}</button>
@@ -779,7 +783,7 @@
             class="px-4 py-2 text-xs uppercase tracking-wider border rounded-lg cursor-pointer transition-all duration-300 {translateLabel === 'done' ? 'text-green-400 border-green-400/30' : translateLabel === 'error' ? 'text-red-400 border-red-400/30' : translateLabel === 'none' ? 'text-text-muted border-surface-lighter/40' : 'text-primary/70 border-primary/20 hover:border-primary/40 hover:text-primary'}"
             class:opacity-60={translating}
             class:pointer-events-none={translating}
-          >{t(translateLabel === 'translating' ? 'admin.translating' : translateLabel === 'done' ? 'admin.translateDone' : translateLabel === 'none' ? 'admin.translateNone' : translateLabel === 'error' ? 'admin.translateError' : 'admin.autoTranslate', $lang)}</button>
+          ><svg class="w-3 h-3 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18zm0-18c2.5 3 4 6.5 4 9s-1.5 6-4 9m0-18c-2.5 3-4 6.5-4 9s1.5 6 4 9m-9-9h18"/></svg>{t(translateLabel === 'translating' ? 'admin.translating' : translateLabel === 'done' ? 'admin.translateDone' : translateLabel === 'none' ? 'admin.translateNone' : translateLabel === 'error' ? 'admin.translateError' : 'admin.autoTranslate', $lang)}</button>
         </div>
       </div>
     </div>
