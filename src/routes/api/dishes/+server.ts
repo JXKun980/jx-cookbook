@@ -38,6 +38,22 @@ export const POST: RequestHandler = async ({ request, platform }) => {
   return json(dish);
 };
 
+export const PUT: RequestHandler = async ({ request, platform }) => {
+  if (!checkAuth(request, platform)) {
+    return json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const kv = getKV(platform);
+  if (!kv) {
+    return json({ error: 'KV not available' }, { status: 500 });
+  }
+
+  const dishes: Dish[] = await request.json();
+  await saveDishes(kv, dishes);
+
+  return json({ ok: true });
+};
+
 export const DELETE: RequestHandler = async ({ request, platform }) => {
   if (!checkAuth(request, platform)) {
     return json({ error: 'Unauthorized' }, { status: 401 });

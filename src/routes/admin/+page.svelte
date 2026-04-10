@@ -136,16 +136,21 @@
   }
 
   async function removeTagFromAllDishes(tagKey: string) {
-    const affected = dishes.filter(d => d.tags?.includes(tagKey));
-    for (const d of affected) {
-      d.tags = d.tags.filter(t => t !== tagKey);
+    let changed = false;
+    dishes.forEach(d => {
+      if (d.tags?.includes(tagKey)) {
+        d.tags = d.tags.filter(t => t !== tagKey);
+        changed = true;
+      }
+    });
+    if (changed) {
+      dishes = [...dishes];
       await fetch('/api/dishes', {
-        method: 'POST',
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: password },
-        body: JSON.stringify(d)
+        body: JSON.stringify(dishes)
       });
     }
-    if (affected.length > 0) dishes = [...dishes];
   }
 
   async function deleteCustomTag(key: string) {
