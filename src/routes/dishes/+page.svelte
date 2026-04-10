@@ -71,6 +71,13 @@
     modalData = null;
   }
 
+  function formatStep(text: string): string {
+    return text
+      .replace(/\*\*(.+?)\*\*/g, '<strong class="text-text font-medium">$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/==(.+?)==/g, '<mark class="bg-primary/15 text-primary px-1 rounded">$1</mark>');
+  }
+
   function handleKeydown(e: KeyboardEvent) {
     if (e.key === 'Escape' && modalOpen) closeModal();
   }
@@ -201,7 +208,7 @@
                   {:else}
                     <div class="flex gap-3">
                       <span class="text-primary/40 text-xs mt-0.5 shrink-0">•</span>
-                      <p class="text-text-muted text-sm leading-relaxed">{step}</p>
+                      <p class="text-text-muted text-sm leading-relaxed">{@html formatStep(step)}</p>
                     </div>
                   {/if}
                 {/each}

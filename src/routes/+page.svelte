@@ -39,6 +39,13 @@
     modalDish = null;
   }
 
+  function formatStep(text: string): string {
+    return text
+      .replace(/\*\*(.+?)\*\*/g, '<strong class="text-text font-medium">$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/==(.+?)==/g, '<mark class="bg-primary/15 text-primary px-1 rounded">$1</mark>');
+  }
+
   function handleKeydown(e: KeyboardEvent) {
     if (e.key === 'Escape' && modalOpen) closeModal();
   }
@@ -176,7 +183,7 @@
                   <div class="shrink-0 {dishIdx % 2 === 1 ? 'md:order-2' : ''}">
                     <div class="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border border-primary/15 bg-surface-light flex items-center justify-center transition-all duration-500 group-hover:border-primary/30 group-hover:shadow-lg group-hover:shadow-primary/5">
                       {#if dish.hasImage}
-                        <img src="/api/image?id={dish.id}" alt={dishTitle(dish)} class="w-full h-full object-cover" />
+                        <img src="/api/image?id={dish.id}" alt={$lang === 'zh' ? (dish.title_zh || dish.title_en) : dish.title_en} class="w-full h-full object-cover" />
                       {:else}
                         <svg class="w-10 h-10 text-surface-lighter transition-colors duration-500 group-hover:text-primary/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="0.8">
                           <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
@@ -187,9 +194,9 @@
                   {/if}
 
                   <div class="flex-1 {data.menu.showImages !== false ? `text-center md:text-left ${dishIdx % 2 === 1 ? 'md:text-right' : ''}` : 'text-center'}">
-                    <h3 class="font-display text-xl md:text-2xl text-text font-medium tracking-wide mb-2">{dishTitle(dish)}</h3>
+                    <h3 class="font-display text-xl md:text-2xl text-text font-medium tracking-wide mb-2">{$lang === 'zh' ? (dish.title_zh || dish.title_en) : dish.title_en}</h3>
                     <p class="text-text-muted text-base leading-relaxed max-w-sm mx-auto {data.menu.showImages !== false ? 'md:mx-0' : ''} mb-3 italic">
-                      {dishDesc(dish)}
+                      {$lang === 'zh' ? (dish.description_zh || dish.description_en) : dish.description_en}
                     </p>
                     <div class="flex flex-wrap gap-2 justify-center {data.menu.showImages !== false && dishIdx % 2 === 1 ? 'md:justify-end' : data.menu.showImages !== false ? 'md:justify-start' : ''}">
                       {#each dish.tags as tag}
@@ -309,7 +316,7 @@
                   {:else}
                     <div class="flex gap-3">
                       <span class="text-primary/40 text-xs mt-0.5 shrink-0">•</span>
-                      <p class="text-text-muted text-sm leading-relaxed">{step}</p>
+                      <p class="text-text-muted text-sm leading-relaxed">{@html formatStep(step)}</p>
                     </div>
                   {/if}
                 {/each}

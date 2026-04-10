@@ -193,7 +193,7 @@ const translations: Record<string, Record<Lang, string>> = {
   'admin.addItem': { en: '+ Item', zh: '+ 添加' },
   'admin.addGroup': { en: '+ Add Group', zh: '+ 添加分组' },
   'admin.steps': { en: 'Steps', zh: '步骤' },
-  'admin.stepsPlaceholder': { en: 'One step per line\n# Heading for sub-sections', zh: '每行一个步骤\n# 用于子标题' },
+  'admin.stepsPlaceholder': { en: 'One step per line\n# Heading for sub-sections\n**bold**  *italic*  ==highlight==', zh: '每行一个步骤\n# 用于子标题\n**粗体**  *斜体*  ==高亮==' },
   'admin.image': { en: 'Image', zh: '图片' },
   'admin.courses': { en: 'Courses', zh: '课程分类' },
   'admin.save': { en: 'Save', zh: '保存' },

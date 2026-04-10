@@ -334,12 +334,37 @@
   }
 
   function addGroup() {
-    ingredientGroups = [...ingredientGroups, { name: 'New Group', items: [{ name: '', qty: '' }] }];
+    ingredientGroups = [...ingredientGroups, { name: '', items: [{ name: '', qty: '' }] }];
   }
 
   function removeGroup(gi: number) {
     ingredientGroups.splice(gi, 1);
     ingredientGroups = [...ingredientGroups];
+  }
+
+  // Drag and drop for ingredients
+  let dragGi = -1;
+  let dragIi = -1;
+
+  function onDragStart(gi: number, ii: number) {
+    dragGi = gi;
+    dragIi = ii;
+  }
+
+  function onDragOver(e: DragEvent, gi: number, ii: number) {
+    e.preventDefault();
+    if (dragGi === gi && dragIi !== ii) {
+      const items = ingredientGroups[gi].items;
+      const dragged = items.splice(dragIi, 1)[0];
+      items.splice(ii, 0, dragged);
+      dragIi = ii;
+      ingredientGroups = [...ingredientGroups];
+    }
+  }
+
+  function onDragEnd() {
+    dragGi = -1;
+    dragIi = -1;
   }
 
   function onImageChange(e: Event) {
@@ -359,10 +384,25 @@
 
     const id = editingId || titleEn.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     const ingredients: Record<string, Ingredient[]> = {};
+    const hasNamedGroups = ingredientGroups.some(g => g.name.trim() && g.name.trim() !== '_default');
+    const unnamedItems: Ingredient[] = [];
     ingredientGroups.forEach(g => {
       const filtered = g.items.filter(i => i.name.trim());
-      if (filtered.length > 0) ingredients[g.name] = filtered.map(i => ({ name_en: i.name, name_zh: i.name, qty: i.qty }));
+      if (filtered.length === 0) return;
+      const mapped = filtered.map(i => ({ name_en: i.name, name_zh: i.name, qty: i.qty }));
+      if (g.name.trim() && g.name.trim() !== '_default') {
+        ingredients[g.name.trim()] = mapped;
+      } else {
+        unnamedItems.push(...mapped);
+      }
     });
+    if (unnamedItems.length > 0) {
+      if (hasNamedGroups) {
+        ingredients['Other'] = unnamedItems;
+      } else {
+        ingredients['_default'] = unnamedItems;
+      }
+    }
 
     const dish: any = {
       id,
@@ -806,7 +846,11 @@
                     <button on:click={() => removeGroup(gi)} class="text-[10px] text-red-400 uppercase tracking-wider cursor-pointer ml-2 shrink-0 px-2.5 py-1 rounded border border-red-400/20 bg-red-400/5 hover:bg-red-400/10 hover:text-red-300 transition-all">{t('admin.remove', $lang)}</button>
                   </div>
                   {#each group.items as item, ii}
-                    <div class="flex flex-wrap gap-1.5 mb-1.5">
+                    <!-- svelte-ignore a11y-no-static-element-interactions -->
+                    <div class="flex flex-wrap gap-1.5 mb-1.5 {dragGi === gi && dragIi === ii ? 'opacity-50' : ''}" draggable="true" on:dragstart={() => onDragStart(gi, ii)} on:dragover={(e) => onDragOver(e, gi, ii)} on:dragend={onDragEnd}>
+                      <span class="flex items-center cursor-grab text-text-muted/30 hover:text-text-muted/60 shrink-0 select-none" title="Drag to reorder">
+                        <svg class="w-4 h-4" viewBox="0 0 16 16" fill="currentColor"><circle cx="5" cy="3" r="1.5"/><circle cx="11" cy="3" r="1.5"/><circle cx="5" cy="8" r="1.5"/><circle cx="11" cy="8" r="1.5"/><circle cx="5" cy="13" r="1.5"/><circle cx="11" cy="13" r="1.5"/></svg>
+                      </span>
                       <input bind:value={ingredientGroups[gi].items[ii].name} placeholder={t('admin.ingredient', $lang)} class="flex-1 min-w-0 px-2 py-1.5 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
                       <input bind:value={ingredientGroups[gi].items[ii].qty} placeholder="Qty" class="w-20 shrink-0 px-2 py-1.5 bg-surface-light border border-surface-lighter/40 rounded text-text text-xs focus:outline-none focus:border-primary/30" />
                       <button on:click={() => removeIngredient(gi, ii)} class="text-red-400/50 hover:text-red-400 text-xs cursor-pointer shrink-0"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
