@@ -1,6 +1,7 @@
 <script lang="ts">
   import { auth, lang } from '$lib/stores';
   import { t } from '$lib/i18n';
+  import { DIETARY_OPTIONS, DIETARY_SVGS, getDietaryLabel } from '$lib/dietary';
   import { onMount, tick } from 'svelte';
   import { browser } from '$app/environment';
   import type { Dish, MenuConfig, Ingredient } from '$lib/types';
@@ -42,6 +43,7 @@
   let descZh = '';
   let steps = '';
   let selectedTags: string[] = [];
+  let selectedDietary: string[] = [];
   let tagsExpanded = false;
   let ingredientGroups: { name: string; items: { name: string; qty: string }[] }[] = [{ name: '_default', items: [{ name: '', qty: '' }] }];
   let imageDataUrl: string | null = null;
@@ -183,22 +185,26 @@
   let tagEditorSaveState: 'idle' | 'saving' | 'saved' = 'idle';
 
   function initTagEditor() {
-    editableCategories = TAG_CATEGORIES.map(cat => ({
-      label_en: cat.label,
-      label_zh: t(`filter.${cat.label.toLowerCase()}`, 'zh'),
-      tags: cat.tags.map(tag => ({
-        en: t(`tag.${tag}`, 'en'),
-        zh: t(`tag.${tag}`, 'zh'),
-      }))
-    }));
-    // Merge custom categories
-    for (const cat of customData.categories) {
-      const catTags = getCustomTagsByCategory(cat.key);
-      editableCategories.push({
-        label_en: cat.en,
-        label_zh: cat.zh,
-        tags: catTags.map(k => ({ en: customData.tags[k].en, zh: customData.tags[k].zh }))
+    if (customData.categories.length > 0) {
+      // Use saved data as source of truth
+      editableCategories = customData.categories.map(cat => {
+        const catTags = getCustomTagsByCategory(cat.key);
+        return {
+          label_en: cat.en,
+          label_zh: cat.zh,
+          tags: catTags.map(k => ({ en: customData.tags[k].en, zh: customData.tags[k].zh }))
+        };
       });
+    } else {
+      // First time: initialize from built-in defaults
+      editableCategories = TAG_CATEGORIES.map(cat => ({
+        label_en: cat.label,
+        label_zh: t(`filter.${cat.label.toLowerCase()}`, 'zh'),
+        tags: cat.tags.map(tag => ({
+          en: t(`tag.${tag}`, 'en'),
+          zh: t(`tag.${tag}`, 'zh'),
+        }))
+      }));
     }
   }
 
@@ -263,7 +269,7 @@
   let menuSaveState: 'idle' | 'saving' | 'saved' = 'idle';
 
   function getFormState(): string {
-    return JSON.stringify({ titleEn, titleZh, descEn, descZh, steps, selectedTags, ingredientGroups, imageDataUrl, selectedCourses });
+    return JSON.stringify({ titleEn, titleZh, descEn, descZh, steps, selectedTags, selectedDietary, ingredientGroups, imageDataUrl, selectedCourses });
   }
 
   function isDirty(): boolean {
@@ -323,6 +329,7 @@
       descZh = dish.description_zh || '';
       steps = dish.steps_zh || dish.steps_en || '';
       selectedTags = [...(dish.tags || [])];
+      selectedDietary = [...(dish.dietary || [])];
       ingredientGroups = Object.entries(dish.ingredients || {}).map(([name, items]) => ({
         name, items: (items as Ingredient[]).map(i => ({ name: i.name_zh || i.name_en, qty: i.qty }))
       }));
@@ -334,6 +341,7 @@
       editingId = null;
       titleEn = ''; titleZh = ''; descEn = ''; descZh = ''; steps = '';
       selectedTags = [];
+      selectedDietary = [];
       ingredientGroups = [{ name: '_default', items: [{ name: '', qty: '' }] }];
       selectedCourses = [];
       imageDataUrl = null;
@@ -354,6 +362,11 @@
   function toggleTag(f: string) {
     if (selectedTags.includes(f)) selectedTags = selectedTags.filter(x => x !== f);
     else selectedTags = [...selectedTags, f];
+  }
+
+  function toggleDietary(key: string) {
+    if (selectedDietary.includes(key)) selectedDietary = selectedDietary.filter(x => x !== key);
+    else selectedDietary = [...selectedDietary, key];
   }
 
   function toggleCourse(k: string) {
@@ -449,6 +462,7 @@
       description_en: descEn.trim(),
       description_zh: descZh.trim(),
       tags: selectedTags,
+      dietary: selectedDietary,
       ingredients,
       steps_en: steps.trim(),
       steps_zh: steps.trim(),
@@ -788,6 +802,18 @@
             <div>
               <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-1">{t('admin.descZh', $lang)}</label>
               <textarea bind:value={descZh} rows="3" class="w-full px-3 py-2 bg-surface border border-surface-lighter/40 rounded-lg text-text text-sm focus:outline-none focus:border-primary/30 resize-none"></textarea>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-text-muted text-[10px] uppercase tracking-wider mb-2">{t('admin.dietary', $lang)}</label>
+            <div class="flex flex-wrap gap-1.5">
+              {#each DIETARY_OPTIONS as opt}
+                <button type="button" on:click={() => toggleDietary(opt.key)} class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-full border cursor-pointer transition-all duration-200 {selectedDietary.includes(opt.key) ? 'bg-primary/15 border-primary/40 text-primary' : 'border-surface-lighter/40 text-text-muted hover:border-primary/20 hover:text-text'}">
+                  <span class="w-3.5 h-3.5 inline-block">{@html DIETARY_SVGS[opt.key]}</span>
+                  {getDietaryLabel(opt.key, $lang)}
+                </button>
+              {/each}
             </div>
           </div>
 

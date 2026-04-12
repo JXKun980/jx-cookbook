@@ -22,6 +22,7 @@ const mockDishes: Dish[] = [
     description_en: 'A crispy panko-crusted chicken thigh served over rice with a rich Japanese curry sauce.',
     description_zh: '酥脆的面包糠炸鸡排配上浓郁的日式咖喱酱，搭配米饭。',
     tags: ['savory', 'umami', 'mild-spice', 'comfort', 'crispy'],
+    dietary: [],
     ingredients: {
       'Chicken Cutlet': [
         { name_en: 'chicken thigh, boneless', name_zh: '去骨鸡腿肉', qty: '2 pcs' },
@@ -47,6 +48,7 @@ const mockDishes: Dish[] = [
     description_en: 'A warming and delicate Japanese soup with tofu, wakame seaweed, and spring onions.',
     description_zh: '温暖细腻的日式汤品，配有豆腐、裙带菜和葱花。',
     tags: ['umami', 'light', 'warming', 'clean', 'delicate', 'asian'],
+    dietary: ['vegetarian', 'vegan'],
     ingredients: {
       _default: [
         { name_en: 'dashi stock', name_zh: '高汤', qty: '800ml' },

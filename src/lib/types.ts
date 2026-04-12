@@ -11,6 +11,7 @@ export interface Dish {
   description_en: string
   description_zh: string
   tags: string[]
+  dietary: string[]
   ingredients: Record<string, Ingredient[]>
   steps_en: string
   steps_zh: string

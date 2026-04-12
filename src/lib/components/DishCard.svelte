@@ -2,6 +2,7 @@
   import { createEventDispatcher } from 'svelte';
   import { lang } from '$lib/stores';
   import { t } from '$lib/i18n';
+  import { DIETARY_SVGS, getDietaryLabel } from '$lib/dietary';
   import type { Dish } from '$lib/types';
   import { browser } from '$app/environment';
 
@@ -49,6 +50,7 @@
       title,
       description,
       tags: dish.tags,
+      dietary: dish.dietary || [],
       ingredients: dish.ingredients,
       steps,
     });
@@ -109,6 +111,16 @@
       {/each}
     </div>
 
+    {#if dish.dietary?.length > 0}
+      <div class="flex flex-wrap gap-1.5">
+        {#each dish.dietary as d}
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] rounded-full bg-surface-lighter/30 text-text-muted" title={getDietaryLabel(d, $lang)}>
+            <span class="w-3 h-3 inline-block">{@html DIETARY_SVGS[d] || ''}</span>
+            {getDietaryLabel(d, $lang)}
+          </span>
+        {/each}
+      </div>
+    {/if}
 
   </div>
 </div>

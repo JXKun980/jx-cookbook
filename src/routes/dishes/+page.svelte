@@ -1,6 +1,7 @@
 <script lang="ts">
   import { lang } from '$lib/stores';
   import { t } from '$lib/i18n';
+  import { DIETARY_SVGS, getDietaryLabel } from '$lib/dietary';
   import DishCard from '$lib/components/DishCard.svelte';
   import FilterBar from '$lib/components/FilterBar.svelte';
   import { onMount, afterUpdate } from 'svelte';
@@ -173,6 +174,16 @@
           {/if}
           <div>
             <h2 class="font-display text-2xl font-medium text-text mb-2">{modalData.title}</h2>
+            {#if modalData.dietary?.length > 0}
+              <div class="flex flex-wrap gap-1.5 mb-3">
+                {#each modalData.dietary as d}
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-surface-lighter/30 text-text-muted">
+                    <span class="w-3.5 h-3.5 inline-block">{@html DIETARY_SVGS[d] || ''}</span>
+                    {getDietaryLabel(d, $lang)}
+                  </span>
+                {/each}
+              </div>
+            {/if}
 
             <p class="text-text-muted text-base leading-relaxed">{modalData.description}</p>
           </div>

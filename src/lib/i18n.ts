@@ -204,6 +204,12 @@ const translations: Record<string, Record<Lang, string>> = {
 
   'admin.showImages': { en: 'Show photos on menu', zh: '在菜单中显示图片' },
   'admin.showDishImages': { en: 'Show photos on dishes page', zh: '在菜品页显示图片' },
+  'dietary.vegetarian': { en: 'Vegetarian', zh: '素食' },
+  'dietary.vegan': { en: 'Vegan', zh: '纯素' },
+  'dietary.seafood': { en: 'Seafood', zh: '海鲜' },
+  'dietary.spicy': { en: 'Spicy', zh: '辛辣' },
+  'dietary.nuts': { en: 'Contains Nuts', zh: '含坚果' },
+  'admin.dietary': { en: 'Dietary', zh: '饮食标签' },
   'modal.close': { en: 'Close', zh: '关闭' },
   'admin.addNewTag': { en: '+ New Tag', zh: '+ 新标签' },
   'admin.manageTags': { en: 'Manage Tags', zh: '管理标签' },
