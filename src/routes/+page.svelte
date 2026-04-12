@@ -203,11 +203,23 @@
                     <p class="text-text-muted text-base leading-relaxed max-w-sm mx-auto {data.menu.showImages !== false ? 'md:mx-0' : ''} mb-3 italic">
                       {$lang === 'zh' ? (dish.description_zh || dish.description_en) : dish.description_en}
                     </p>
+                    {#if dish.dietary?.length > 0}
+                      <div class="flex flex-wrap gap-1.5 mb-2 justify-center {data.menu.showImages !== false && dishIdx % 2 === 1 ? 'md:justify-end' : data.menu.showImages !== false ? 'md:justify-start' : ''}">
+                        {#each dish.dietary as d}
+                          <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] rounded-full bg-surface-lighter/20 text-text-muted" title={getDietaryLabel(d, $lang)}>
+                            <span class="w-3 h-3 inline-block">{@html DIETARY_SVGS[d] || ''}</span>
+                            {getDietaryLabel(d, $lang)}
+                          </span>
+                        {/each}
+                      </div>
+                    {/if}
+                    {#if data.menu.showMenuTags !== false}
                     <div class="flex flex-wrap gap-2 justify-center {data.menu.showImages !== false && dishIdx % 2 === 1 ? 'md:justify-end' : data.menu.showImages !== false ? 'md:justify-start' : ''}">
                       {#each dish.tags as tag}
                         <span class="text-xs text-primary-dim uppercase tracking-[0.2em]">{t(`tag.${tag}`, $lang)}</span>
                       {/each}
                     </div>
+                    {/if}
                   </div>
                 </div>
               {/each}

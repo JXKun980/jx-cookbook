@@ -204,6 +204,7 @@ const translations: Record<string, Record<Lang, string>> = {
 
   'admin.showImages': { en: 'Show photos on menu', zh: '在菜单中显示图片' },
   'admin.showDishImages': { en: 'Show photos on dishes page', zh: '在菜品页显示图片' },
+  'admin.showMenuTags': { en: 'Show tags on menu', zh: '在菜单中显示标签' },
   'dietary.vegetarian': { en: 'Vegetarian', zh: '素食' },
   'dietary.vegan': { en: 'Vegan', zh: '纯素' },
   'dietary.seafood': { en: 'Seafood', zh: '海鲜' },

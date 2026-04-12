@@ -696,6 +696,15 @@
         <span class="text-text-muted text-xs">{t('admin.showImages', $lang)}</span>
       </div>
 
+      <!-- svelte-ignore a11y-click-events-have-key-events -->
+      <!-- svelte-ignore a11y-no-static-element-interactions -->
+      <div class="flex items-center gap-3 cursor-pointer" on:click={() => { menu.showMenuTags = !menu.showMenuTags; menu = menu; }}>
+        <div class="relative w-10 h-[22px] rounded-full transition-colors duration-300 {menu.showMenuTags ? 'bg-primary' : 'bg-surface-lighter/50'}">
+          <div class="absolute top-[3px] w-4 h-4 rounded-full bg-white shadow transition-transform duration-300 {menu.showMenuTags ? 'translate-x-[22px]' : 'translate-x-[3px]'}"></div>
+        </div>
+        <span class="text-text-muted text-xs">{t('admin.showMenuTags', $lang)}</span>
+      </div>
+
       <div class="space-y-4">
         {#key menu}
         {#each COURSES as course}

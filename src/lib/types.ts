@@ -24,6 +24,7 @@ export interface MenuConfig {
   title_zh: string
   showImages?: boolean
   showDishImages?: boolean
+  showMenuTags?: boolean
   courses: {
     appetizer: string[]
     main: string[]
